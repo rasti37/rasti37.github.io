@@ -57,7 +57,9 @@ jobs:
             --gc \
             --minify \
             --baseURL "${{ steps.pages.outputs.base_url }}/" \
-            --config "hugo.toml"
+            --source "website" \
+            --ignoreCache \
+            --logLevel "debug"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
