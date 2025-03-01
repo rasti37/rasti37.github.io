@@ -1,0 +1,138 @@
+html {
+    overflow-y: scroll;
+}
+
+:root {
+    --bgcolor: white;
+    --fontcolor: #444;
+    --linkcolor: #00e;
+    --visitedcolor: #551a8b;
+    --precolor: #fff;
+    --prebgcolor: #000;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bgcolor: black;
+        --fontcolor: white;
+        --linkcolor: #5bf;
+        --visitedcolor: #c070f2;
+        --precolor: #ccc;
+        --prebgcolor: #1f1f1f;
+        --visitedhovercolor: #ff6d8f;
+        --visitedhovercolor: #ff6d8f;
+        --hovercolor: #0077ff;
+    }
+}
+
+body {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 10px;
+    font: 13px/1.5 monospace;
+    color: var(--fontcolor);
+    background: var(--bgcolor);
+}
+
+a:link {
+    color: var(--linkcolor);
+    text-decoration: none;
+}
+
+a:link:hover {
+    color: var(--hovercolor);
+}
+
+a:visited {
+    color: var(--visitedcolor);
+}
+
+a:visited:hover {
+    color: var(--visitedhovercolor);
+}
+
+a:active {
+    color: var(--visitedcolor);
+}
+
+h1,
+h2,
+h3 {
+    line-height: 1.2;
+}
+
+p>code {
+    color: var(--precolor);
+    background: var(--prebgcolor);
+    padding: 3px;
+    border-radius: 3px;
+}
+
+code {
+    color: var(--precolor);
+    background: var(--prebgcolor);
+    /*padding:2px*/
+}
+
+pre {
+    color: var(--precolor);
+    background: var(--prebgcolor) !important;
+    padding: 18px;
+    overflow-x: auto;
+	border-radius: 5px;
+}
+
+article {
+    padding: 24px 0;
+}
+
+.center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
+
+figcaption {
+    color: #888;
+    font: 12px/1.5 monospace;
+    text-align: center;
+}
+
+figure {
+    margin: auto;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: auto;
+}
+
+code {
+    text-wrap: wrap;
+    font-size: 13px;
+}
+
+a.header-footer-anchor {
+    color: var(--linkcolor) !important;
+}
+
+a.header-footer-anchor:visited:hover {
+    color: var(--hovercolor) !important;
+}
+
+/* Configure quotes */
+blockquote {
+    font-style: italic;
+    font-size: 13px;
+    text-align: center;
+    text-indent: 0;
+    margin-left: 1em;
+    border-left: 1px solid #888;
+}
+
+summary:hover {
+	color: #aaa;
+}

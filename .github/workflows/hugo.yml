@@ -60,6 +60,10 @@ jobs:
             --source "website" \
             --ignoreCache \
             --logLevel "debug"
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./public
 
   # Deployment job
   deploy:
