@@ -1,0 +1,10 @@
+<footer>
+	<p>&copy; {{ now.Year }} :: <a href="{{ .Site.BaseURL }}"
+			class='header-footer-anchor'><b>{{ if .Site.Copyright }}{{ .Site.Copyright }}{{ else }}{{ .Site.Title }}{{ end }}</b></a>
+		·
+		{{- range .Site.Menus.footer }}
+		<a href="{{ .URL }}" class='header-footer-anchor'><b>{{ .Name }}</b></a> ·
+		{{- end }}
+	</p>
+</footer>
+{{ if .Params.katex }}{{ partial "katex.html" . }}{{ end }}

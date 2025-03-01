@@ -1,0 +1,16 @@
+{{ define "main" }}
+<main>
+	<article>
+		<h1>{{ .Title }}</h1>
+		<b><time>{{ .Date.Format (default "2006-01-02, 15:04:05" .Site.Params.dateFmt) }}</time></b> :: 
+		{{ $l := sub (len .Params.tags) 1 }}
+		{{ range $index, $tags := .Params.tags }}
+		<a href="{{ "tags/" | relLangURL }}{{ . | urlize }}" class='header-footer-anchor'>#{{ . }}</a>{{ if ne $index $l }}, {{ end }}
+		{{ end }}
+		<div>
+			{{ .Content }}
+		</div>
+	</article>
+</main>
+{{ partial "sidebar.html" . }}
+{{ end }}
