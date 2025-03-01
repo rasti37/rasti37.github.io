@@ -6,9 +6,10 @@
 	<p>
 	<nav>
 		<a href="/" class='header-footer-anchor'><b>Start</b></a> ·
+		{{ $l := sub (len .Site.Menus.main) 1 }}
 		{{ with .Site.Menus.main }}
-		{{ range . }}
-		<a href="{{ .URL | relURL }}" class='header-footer-anchor'><b>{{ .Name }}</b></a> ·
+		{{ range $index, $menu := . }}
+		<a href="{{ .URL | relURL }}" class='header-footer-anchor'><b>{{ .Name }}</b></a>{{ if ne $index $l }} · {{ end }}
 		{{ end }}
 	</nav>
 	</p>

@@ -1,9 +1,9 @@
 <footer>
 	<p>&copy; {{ now.Year }} :: <a href="{{ .Site.BaseURL }}"
-			class='header-footer-anchor'><b>{{ if .Site.Copyright }}{{ .Site.Copyright }}{{ else }}{{ .Site.Title }}{{ end }}</b></a>
-		·
-		{{- range .Site.Menus.footer }}
-		<a href="{{ .URL }}" class='header-footer-anchor'><b>{{ .Name }}</b></a> ·
+			class='header-footer-anchor'><b>{{ if .Site.Copyright }}{{ .Site.Copyright }}{{ else }}{{ .Site.Title }}{{ end }}</b></a> ·
+		{{ $l := sub (len .Site.Menus.footer) 1 }}
+		{{- range $index, $menu := .Site.Menus.footer }}
+		<a href="{{ .URL }}" class='header-footer-anchor'><b>{{ .Name }}</b></a>{{ if ne $index $l }} · {{ end }}
 		{{- end }}
 	</p>
 </footer>

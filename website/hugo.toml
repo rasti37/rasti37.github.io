@@ -3,7 +3,6 @@ languageCode = 'en-us'
 title = "rasti's knowledge cave"
 theme = 'smol'
 tableOfContents = true
-publishDir = 'public'
 
 [markup]
   [markup.tableOfContents]

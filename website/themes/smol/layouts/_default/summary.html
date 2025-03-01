@@ -1,8 +1,9 @@
 <article>
 	<h1><a href="{{ .Permalink }}">{{ .Title }}</a></h1>
-	<b><time>{{ .Date.Format (default "2006-01-02 15:04:05" .Site.Params.dateFmt) }}</time></b>
-	{{ range .Params.tags }}
-	<a href="{{ "/tags/" | relLangURL }}{{ . | urlize }}">{{ . }}</a>
+	<b><time>{{ .Date.Format (default "2006-01-02 15:04:05" .Site.Params.dateFmt) }}</time></b> ::
+	{{ $l := sub (len .Params.tags) 1 }}
+	{{ range $index, $tag := .Params.tags }}
+	<a href="{{ "tags/" | relLangURL }}{{ . | urlize }}">#{{ . }}</a>{{ if ne $index $l }}, {{ end }}
 	{{ end }}
 	<div>
 		{{ .Summary }}

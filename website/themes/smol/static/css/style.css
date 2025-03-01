@@ -119,6 +119,10 @@ a.header-footer-anchor {
     color: var(--linkcolor) !important;
 }
 
+a.header-footer-anchor:hover {
+    color: var(--hovercolor) !important;
+}
+
 a.header-footer-anchor:visited:hover {
     color: var(--hovercolor) !important;
 }
