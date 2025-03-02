@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<link rel="icon" type="image/x-icon" href="/thumb.png">
+	<style type=text/css>body{font-family:monospace;}</style>
+	<title>LITCTF 2023 - LCG... Squared?</title>
+	
+	
+	<link rel="stylesheet" href="/css/style.css">
+	
+	
+</head>
+<body>
+	<header>
+	::::::::::::::::::::::::::::<br>
+	:: <a href="http://localhost:1313/" class='header-footer-anchor'>rasti&#39;s knowledge cave</a> ::<br>
+	::::::::::::::::::::::::::::
+	<div style="float: right;">nothing fancy yet</div><br>
+	<p>
+	<nav>
+		<a href="/" class='header-footer-anchor'><b>Start</b></a> ·
+		
+		
+		
+		<a href="/posts/" class='header-footer-anchor'><b>Posts</b></a> · 
+		
+		<a href="/categories/" class='header-footer-anchor'><b>Categories</b></a> · 
+		
+		<a href="/tags/" class='header-footer-anchor'><b>Tags</b></a>
+		
+	</nav>
+	</p>
+	
+</header>
+	
+<main>
+	<article>
+		<h1>LITCTF 2023 - LCG... Squared?</h1>
+		<b><time>2025-03-02, 03:31:49</time></b> :: 
+		
+		
+		<a href="/tags/ctf-writeups" class='header-footer-anchor'>#ctf-writeups</a>, 
+		
+		<a href="/tags/crypto" class='header-footer-anchor'>#crypto</a>
+		
+		<div>
+			<div style='cursor: pointer; border-radius: 3px; border:1px solid #888; padding: 7px; margin: 1.3em 0 1.3em 0;'>
+    <details>
+        <summary>Table of Contents</summary>
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#description">Description</a></li>
+    <li><a href="#synopsis">Synopsis</a></li>
+    <li><a href="#overview">Overview</a>
+      <ul>
+        <li><a href="#analyzing-the-lcg-classes">Analyzing the LCG classes</a></li>
+      </ul>
+    </li>
+    <li><a href="#solution">Solution</a>
+      <ul>
+        <li><a href="#simulating-the-lcgs-symbolically">Simulating the LCGs symbolically</a></li>
+        <li><a href="#setting-up-the-equations">Setting up the equations</a>
+          <ul>
+            <li><a href="#resultant-and-polynomial-gcd">Resultant and Polynomial GCD</a></li>
+            <li><a href="#groebner-basis">Groebner Basis</a></li>
+          </ul>
+        </li>
+        <li><a href="#retrieving-the-unknowns">Retrieving the unknowns</a>
+          <ul>
+            <li><a href="#finding-the-polynomial-roots">Finding the polynomial roots</a></li>
+          </ul>
+        </li>
+        <li><a href="#recovering-the-sixth-output">Recovering the sixth output</a></li>
+      </ul>
+    </li>
+    <li><a href="#full-solve-script">Full solve script</a></li>
+  </ul>
+</nav>
+    </details>
+</div>
+<html>
+<style>
+    table, td, th {  
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+    table {
+        border-collapse: collapse;
+        margin: 0 auto;
+    }
+    th, td {
+        padding: 7px;
+    }
+</style>
+    <table>
+      <tbody>
+        <tr>
+          <td><b>Category</b></td>
+          <td>Crypto</td>
+        </tr>
+        <tr>
+          <td><b>CTF</b></td>
+          <td><a href="https://ctftime.org/event/2052/" target="_blank" class='header-footer-anchor'>LITCTF</a></td>
+        </tr>
+        <tr>
+          <td><b>Year</b></td>
+          <td>2023</td>
+        </tr>
+        <tr>
+          <td><b>Solves</b></td>
+          <td>14</td>
+        </tr>
+        <tr>
+          <td><b>Challenge Author</b></td>
+          <td><code>quasar0147</code></td>
+        </tr>
+      </tbody>
+    </table>
+</html>
+<h1 id="description">Description</h1>
+<p>Apparently lcgs are weak&hellip;&hellip; but my lcgs have doubled their power since they last met!</p>
+<h1 id="synopsis">Synopsis</h1>
+<p>This challenge is about two related LCGs. Knowing five outputs of the second LCG, we are able to get five equations for the five unknowns and use Groebner basis to retrieve equivalent equations but with fewer variables. One of these equations is quadratic so we have two possible values for $b_2$. For each candidate $b_2$, we initialize the lcg with each solution of the system, $x_0, y_0, a_1, b_1, b_2$, and try decrypting the ciphertext until we find the flag.</p>
+<h1 id="overview">Overview</h1>
+<p>First things first, one can download the source code and the challenge&rsquo;s output data from the original <a href="https://github.com/LexMACS/LIT-CTF-2023/blob/main/challenges/crypto/lcg...squared/player.7z" target="_blank">repository</a> of the CTF organizers. I will re-post the source code of the challenge below for direct reference.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#75715e"># inferior rngs</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> random <span style="color:#f92672">import</span> SystemRandom
+</span></span><span style="display:flex;"><span>random <span style="color:#f92672">=</span> SystemRandom()
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Util.number <span style="color:#f92672">import</span> getPrime
+</span></span><span style="display:flex;"><span>p <span style="color:#f92672">=</span> getPrime(<span style="color:#ae81ff">64</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg1</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, n<span style="color:#f92672">=</span><span style="color:#ae81ff">64</span>):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>a <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>m <span style="color:#f92672">=</span> p
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">next</span>(self):
+</span></span><span style="display:flex;"><span>        ret <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>x
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> (self<span style="color:#f92672">.</span>a <span style="color:#f92672">*</span> self<span style="color:#f92672">.</span>x <span style="color:#f92672">+</span> self<span style="color:#f92672">.</span>b) <span style="color:#f92672">%</span> self<span style="color:#f92672">.</span>m
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> ret
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg2</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, n<span style="color:#f92672">=</span><span style="color:#ae81ff">64</span>):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>lcg <span style="color:#f92672">=</span> lcg1(n)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>m <span style="color:#f92672">=</span> p
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">next</span>(self):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> (self<span style="color:#f92672">.</span>lcg<span style="color:#f92672">.</span>next() <span style="color:#f92672">*</span> self<span style="color:#f92672">.</span>x <span style="color:#f92672">+</span> self<span style="color:#f92672">.</span>b) <span style="color:#f92672">%</span> self<span style="color:#f92672">.</span>m
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>x
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>lcg <span style="color:#f92672">=</span> lcg2()
+</span></span><span style="display:flex;"><span>print(p)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">5</span>):
+</span></span><span style="display:flex;"><span>    print(lcg<span style="color:#f92672">.</span>next())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Cipher <span style="color:#f92672">import</span> AES
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Util.number <span style="color:#f92672">import</span> long_to_bytes <span style="color:#66d9ef">as</span> l2b
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Util.Padding <span style="color:#f92672">import</span> pad
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> os <span style="color:#f92672">import</span> urandom
+</span></span><span style="display:flex;"><span>r <span style="color:#f92672">=</span> lcg<span style="color:#f92672">.</span>next()
+</span></span><span style="display:flex;"><span>k <span style="color:#f92672">=</span> pad(l2b(r<span style="color:#f92672">**</span><span style="color:#ae81ff">2</span>), <span style="color:#ae81ff">16</span>)
+</span></span><span style="display:flex;"><span>iv <span style="color:#f92672">=</span> urandom(<span style="color:#ae81ff">16</span>)
+</span></span><span style="display:flex;"><span>cipher <span style="color:#f92672">=</span> AES<span style="color:#f92672">.</span>new(k, AES<span style="color:#f92672">.</span>MODE_CBC, iv<span style="color:#f92672">=</span>iv)
+</span></span><span style="display:flex;"><span>print(iv<span style="color:#f92672">.</span>hex())
+</span></span><span style="display:flex;"><span>f <span style="color:#f92672">=</span> open(<span style="color:#e6db74">&#34;flag.txt&#34;</span>,<span style="color:#e6db74">&#39;rb&#39;</span>)<span style="color:#f92672">.</span>read()<span style="color:#f92672">.</span>strip()
+</span></span><span style="display:flex;"><span>enc <span style="color:#f92672">=</span> cipher<span style="color:#f92672">.</span>encrypt(pad(f,<span style="color:#ae81ff">16</span>))
+</span></span><span style="display:flex;"><span>print(enc<span style="color:#f92672">.</span>hex())
+</span></span></code></pre></div><p>Luckily, the source code is relatively short so it is easy to understand how the flag is encrypted. At a quick glance we see the two LCG classes that are defined which are mathematically connected.</p>
+<p>Before diving into the analysis of the two RNGs, let&rsquo;s get a better idea of the entire cryptosystem.</p>
+<ul>
+<li>First, a 64-bit prime $p$ is generated, which will be used as the modulo for both RNGs.</li>
+<li>We get 5 consecutive outputs of the <code>lcg2</code> RNG along with the prime $p$. We will see later that the number of the known outputs is what makes the challenge solveable. If we knew less states, the following solution wouldn&rsquo;t work!</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>lcg <span style="color:#f92672">=</span> lcg2()
+</span></span><span style="display:flex;"><span>print(p)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> x <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">5</span>):
+</span></span><span style="display:flex;"><span>    print(lcg<span style="color:#f92672">.</span>next())
+</span></span></code></pre></div><ul>
+<li>The next output of the RNG (i.e. the sixth one) is used as the AES key that finally encrypts the flag.</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Cipher <span style="color:#f92672">import</span> AES
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Util.number <span style="color:#f92672">import</span> long_to_bytes <span style="color:#66d9ef">as</span> l2b
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Util.Padding <span style="color:#f92672">import</span> pad
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> os <span style="color:#f92672">import</span> urandom
+</span></span><span style="display:flex;"><span>r <span style="color:#f92672">=</span> lcg<span style="color:#f92672">.</span>next()
+</span></span><span style="display:flex;"><span>k <span style="color:#f92672">=</span> pad(l2b(r<span style="color:#f92672">**</span><span style="color:#ae81ff">2</span>), <span style="color:#ae81ff">16</span>)
+</span></span><span style="display:flex;"><span>iv <span style="color:#f92672">=</span> urandom(<span style="color:#ae81ff">16</span>)
+</span></span><span style="display:flex;"><span>cipher <span style="color:#f92672">=</span> AES<span style="color:#f92672">.</span>new(k, AES<span style="color:#f92672">.</span>MODE_CBC, iv<span style="color:#f92672">=</span>iv)
+</span></span><span style="display:flex;"><span>print(iv<span style="color:#f92672">.</span>hex())
+</span></span><span style="display:flex;"><span>f <span style="color:#f92672">=</span> open(<span style="color:#e6db74">&#34;flag.txt&#34;</span>,<span style="color:#e6db74">&#39;rb&#39;</span>)<span style="color:#f92672">.</span>read()<span style="color:#f92672">.</span>strip()
+</span></span><span style="display:flex;"><span>enc <span style="color:#f92672">=</span> cipher<span style="color:#f92672">.</span>encrypt(pad(f,<span style="color:#ae81ff">16</span>))
+</span></span><span style="display:flex;"><span>print(enc<span style="color:#f92672">.</span>hex())
+</span></span></code></pre></div><p>Assuming AES is secure, the only way to decrypt the ciphertext is to retrieve the encryption key, which means we have to recover $r$ - the sixth output of the RNG. As we don&rsquo;t have many information, we should probably focus on these five outputs.</p>
+<h2 id="analyzing-the-lcg-classes">Analyzing the LCG classes</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg1</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, n<span style="color:#f92672">=</span><span style="color:#ae81ff">64</span>):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>a <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>m <span style="color:#f92672">=</span> p
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">next</span>(self):
+</span></span><span style="display:flex;"><span>        ret <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>x
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> (self<span style="color:#f92672">.</span>a <span style="color:#f92672">*</span> self<span style="color:#f92672">.</span>x <span style="color:#f92672">+</span> self<span style="color:#f92672">.</span>b) <span style="color:#f92672">%</span> self<span style="color:#f92672">.</span>m
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> ret
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg2</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, n<span style="color:#f92672">=</span><span style="color:#ae81ff">64</span>):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>lcg <span style="color:#f92672">=</span> lcg1(n)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>m <span style="color:#f92672">=</span> p
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">next</span>(self):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> (self<span style="color:#f92672">.</span>lcg<span style="color:#f92672">.</span>next() <span style="color:#f92672">*</span> self<span style="color:#f92672">.</span>x <span style="color:#f92672">+</span> self<span style="color:#f92672">.</span>b) <span style="color:#f92672">%</span> self<span style="color:#f92672">.</span>m
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>x
+</span></span></code></pre></div><p>The constructor of the <code>lcg2</code> class creates an object of the <code>lcg1</code> class passing the modulo&rsquo;s bit length as an argument.</p>
+<p>In the constructor of <code>lcg1</code>, three random 64-bit numbers are generated:</p>
+<ul>
+<li>$a_1$ is used as the LCG multiplier.</li>
+<li>$b_1$ as the increment and</li>
+<li>$x_0$ as the seed.</li>
+</ul>
+<p>Similarly, in the constructor of <code>lcg2</code>:</p>
+<ul>
+<li>The multiplier is the output of the first lcg.</li>
+<li>$b_2$ as the increment and</li>
+<li>$y_0$ as the seed.</li>
+</ul>
+<p>As one can notice, we are not given neither the LCG parameters $a_1, b_1, b_2$ nor the seeds $x_0, y_0$. However, to compute the sixth output, we need to recover all these values.</p>
+<h1 id="solution">Solution</h1>
+<p>Let&rsquo;s first write two outputs of <code>lcg2</code>.</p>
+<p>$$
+\begin{aligned}
+y_1 &amp;= x_0y_0 + b_2\\
+y_2 &amp;= x_1y_1 + b_2 = (a_1x_0 + b_1)(x_0y_0 + b_2) + b_2 =\\
+&amp;= a_1y_0x_0^2 + a_1b_2x_0 + b_1y_0x_0 + b_1b_2 + b_2
+\end{aligned}
+$$</p>
+<p>In total, we get 5 relations with 5 unknowns which means that this non-linear system must have a unique solution. But how can we define the system relations and the unknowns?</p>
+<h2 id="simulating-the-lcgs-symbolically">Simulating the LCGs symbolically</h2>
+<p>We could do the algebra by hand but we are too lazy so let&rsquo;s write a SageMath script that creates five variables and runs the LCGs symbolically, instead of running it with actual integers. First, we have to define five variables over $\mathbb{F}(p)$ which can be done as:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>PR<span style="color:#f92672">.&lt;</span>x0,y0,a1,b1,b2<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> PolynomialRing(GF(p))
+</span></span></code></pre></div><p>Next, we slightly modify the classes so that no random numbers are generated in the constructors, but instead, the five variables are passed as arguments.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg1</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, x, a, b1):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>a <span style="color:#f92672">=</span> a
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> b1
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> x
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>m <span style="color:#f92672">=</span> p
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">next</span>(self):
+</span></span><span style="display:flex;"><span>        ret <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>x
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> (self<span style="color:#f92672">.</span>a <span style="color:#f92672">*</span> self<span style="color:#f92672">.</span>x <span style="color:#f92672">+</span> self<span style="color:#f92672">.</span>b) <span style="color:#f92672">%</span> self<span style="color:#f92672">.</span>m
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> ret
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg2</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, x, y, a, b1, b2):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>lcg <span style="color:#f92672">=</span> lcg1(x, a, b1)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> y
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> b2
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>m <span style="color:#f92672">=</span> p
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">next</span>(self):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> (self<span style="color:#f92672">.</span>lcg<span style="color:#f92672">.</span>next() <span style="color:#f92672">*</span> self<span style="color:#f92672">.</span>x <span style="color:#f92672">+</span> self<span style="color:#f92672">.</span>b) <span style="color:#f92672">%</span> self<span style="color:#f92672">.</span>m
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>x
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>lcg <span style="color:#f92672">=</span> lcg2(x0, y0, a1, b1, b2)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">5</span>):
+</span></span><span style="display:flex;"><span>    print(lcg<span style="color:#f92672">.</span>next())
+</span></span></code></pre></div><p>By running this, we obtain the following output which is redacted for the sake of brevity.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>x0<span style="color:#f92672">*</span>y0 <span style="color:#f92672">+</span> b2
+</span></span><span style="display:flex;"><span>x0<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span><span style="color:#f92672">*</span>y0<span style="color:#f92672">*</span>a1 <span style="color:#f92672">+</span> x0<span style="color:#f92672">*</span>y0<span style="color:#f92672">*</span>b1 <span style="color:#f92672">+</span> x0<span style="color:#f92672">*</span>a1<span style="color:#f92672">*</span>b2 <span style="color:#f92672">+</span> b1<span style="color:#f92672">*</span>b2 <span style="color:#f92672">+</span> b2
+</span></span><span style="display:flex;"><span><span style="color:#f92672">.</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">.</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">.</span>
+</span></span></code></pre></div><p>We can verify that the outputs are the same as the ones we calculated by hand above.</p>
+<h2 id="setting-up-the-equations">Setting up the equations</h2>
+<p>Okay, what does it all mean? Why did we do that? Well, we have the following system of equations:</p>
+<p>$$
+\begin{aligned}
+y_1 &amp;= f_1(x_0,y_0,a_1,b_1,b_2) = x_0y_0 + b_2\\
+y_2 &amp;= f_2(x_0,y_0,a_1,b_1,b_2) = &hellip;\\
+y_3 &amp;= f_3(x_0,y_0,a_1,b_1,b_2) = &hellip;\\
+y_4 &amp;= f_4(x_0,y_0,a_1,b_1,b_2) = &hellip;\\
+y_5 &amp;= f_5(x_0,y_0,a_1,b_1,b_2) = &hellip;
+\end{aligned}
+$$</p>
+<p>This system is non-linear and extremely complex to solve by hand since most of $f_i$ depend on all 5 variables and this is where SageMath comes to save the day!</p>
+<p>There are two tricks to use to solve such systems.</p>
+<h3 id="resultant-and-polynomial-gcd">Resultant and Polynomial GCD</h3>
+<p>Suppose you have two equations and two unknowns which you want to compute. Resultant is basically a variable elimination function which you feed it these polynomials, it eliminates one variable, leaving just one variable which you can compute easily even by manual rearrangement. For more complex systems, resultant is combined with polynomial GCD which can be used to figure out common factors of polynomials and cancel them out, therefore eliminating variables.</p>
+<p>However, in our case, each $f_i$ contains all five unknowns so we would have to apply resultant and GCD several times to minimize the number of variables, which would take a lot of time. What if there was a method that applies these techniques (along with some others too) until the number of variables per equation is minimized? Fortunately, there is such a method and it&rsquo;s called <em><strong>Groebner Basis</strong></em>.</p>
+<h3 id="groebner-basis">Groebner Basis</h3>
+<p>Without getting into technical details, what Groebner basis does at a high level is get some multivariate equations, perform clever rearrangements and variable elimination and eventually end up with some equivalent equations that have fewer variables. We will use this challenge as an example.</p>
+<p>Using Groebner basis sounds like a good plan so let&rsquo;s get back to forming the equations that we will feed it.</p>
+<p>Moving $f_i$ to the other side we obtain $y_i - f_i(x_0, y_0, a_1, b_1, b_2) = 0$.</p>
+<p>What Groebner basis will do is find different equations, with fewer variables, that still result in 0. It saves us a lot of time from doing all of this by hand.</p>
+<h2 id="retrieving-the-unknowns">Retrieving the unknowns</h2>
+<p>We will use the following script to generate the equations.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>lcg <span style="color:#f92672">=</span> lcg2(x0, y0, a1, b1, b2)
+</span></span><span style="display:flex;"><span>eqs <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">5</span>):
+</span></span><span style="display:flex;"><span>    sym_out <span style="color:#f92672">=</span> lcg<span style="color:#f92672">.</span>next()
+</span></span><span style="display:flex;"><span>    eqs<span style="color:#f92672">.</span>append(states[i] <span style="color:#f92672">-</span> sym_out)
+</span></span></code></pre></div><p>where,</p>
+<ul>
+<li><code>lcg2</code> the symbolic version of the LCG.</li>
+<li><code>states</code> the array that stores the 5 outputs of the RNG.</li>
+</ul>
+<p>Let&rsquo;s run Groebner basis. We will use the following code. For now, we will treat ideals as black-box.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>I <span style="color:#f92672">=</span> Ideal(eqs)
+</span></span><span style="display:flex;"><span>G <span style="color:#f92672">=</span> I<span style="color:#f92672">.</span>groebner_basis()
+</span></span><span style="display:flex;"><span>print(G)
+</span></span></code></pre></div><pre tabindex="0"><code>b2^2 + 8860549604559953614*b2 + 6081691856514156794
+x0 + 4298251801134044542*b2 + 6949343071462624409
+y0 + 5768326408389828509*b2 + 4968572571594503118
+a1 + 5411030611284425018*b2 + 80950332416582054
+b1 + 9662372171659581811*b2 + 10180096875606879244
+</code></pre><h3 id="finding-the-polynomial-roots">Finding the polynomial roots</h3>
+<p>We notice that we got five much cleaner equivalent equations back for which is trivial to find their roots. The first equation is quadratic so there will be two solutions for $b_2$.</p>
+<p>For each of the $b_2$ candidates, we substitute into the rest polynomials and find their roots. For the time being, we don&rsquo;t have any way to identify the correct solution for $b_2$ so we will create two LCGs - one for each value of $b_2$.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_lcgs</span>(G):
+</span></span><span style="display:flex;"><span>    rb2 <span style="color:#f92672">=</span> G[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>univariate_polynomial()<span style="color:#f92672">.</span>roots(multiplicities<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span><span style="display:flex;"><span>    lcgs <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> b2 <span style="color:#f92672">in</span> rb2:
+</span></span><span style="display:flex;"><span>        x0  <span style="color:#f92672">=</span> G[<span style="color:#ae81ff">1</span>](b2<span style="color:#f92672">=</span>b2)<span style="color:#f92672">.</span>univariate_polynomial()<span style="color:#f92672">.</span>roots(multiplicities<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>        y0  <span style="color:#f92672">=</span> G[<span style="color:#ae81ff">2</span>](b2<span style="color:#f92672">=</span>b2)<span style="color:#f92672">.</span>univariate_polynomial()<span style="color:#f92672">.</span>roots(multiplicities<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>        a1  <span style="color:#f92672">=</span> G[<span style="color:#ae81ff">3</span>](b2<span style="color:#f92672">=</span>b2)<span style="color:#f92672">.</span>univariate_polynomial()<span style="color:#f92672">.</span>roots(multiplicities<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>        b1 <span style="color:#f92672">=</span> G[<span style="color:#ae81ff">4</span>](b2<span style="color:#f92672">=</span>b2)<span style="color:#f92672">.</span>univariate_polynomial()<span style="color:#f92672">.</span>roots(multiplicities<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        lcg <span style="color:#f92672">=</span> lcg2(x0, y0, a1, b1, b2)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">5</span>):
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">assert</span> states[_] <span style="color:#f92672">==</span> lcg<span style="color:#f92672">.</span>next()  <span style="color:#75715e"># sync with chall&#39;s lcg</span>
+</span></span><span style="display:flex;"><span>        lcgs<span style="color:#f92672">.</span>append(lcg)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> lcgs
+</span></span></code></pre></div><p>Note that by calling <code>next()</code> five times, we have synced with the challenge&rsquo;s lcg which ran five times to print each output.</p>
+<h2 id="recovering-the-sixth-output">Recovering the sixth output</h2>
+<p>We have two candidates for the right LCG so we try to decrypt the ciphertext for each of them until we get the flag.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>LCGs <span style="color:#f92672">=</span> get_lcgs(G)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> lcg <span style="color:#f92672">in</span> LCGs:
+</span></span><span style="display:flex;"><span>    r <span style="color:#f92672">=</span> int(lcg<span style="color:#f92672">.</span>next())
+</span></span><span style="display:flex;"><span>    key <span style="color:#f92672">=</span> pad(l2b(r<span style="color:#f92672">**</span><span style="color:#ae81ff">2</span>), <span style="color:#ae81ff">16</span>)
+</span></span><span style="display:flex;"><span>    cipher <span style="color:#f92672">=</span> AES<span style="color:#f92672">.</span>new(key, AES<span style="color:#f92672">.</span>MODE_CBC, iv<span style="color:#f92672">=</span>iv)
+</span></span><span style="display:flex;"><span>    flag <span style="color:#f92672">=</span> cipher<span style="color:#f92672">.</span>decrypt(ct)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span>:
+</span></span><span style="display:flex;"><span>        print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;</span><span style="color:#e6db74">{</span>r <span style="color:#e6db74">= }</span><span style="color:#e6db74">&#39;</span>)
+</span></span><span style="display:flex;"><span>        print(unpad(flag, <span style="color:#ae81ff">16</span>)<span style="color:#f92672">.</span>decode())
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">except</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">pass</span>
+</span></span></code></pre></div><h1 id="full-solve-script">Full solve script</h1>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Cipher <span style="color:#f92672">import</span> AES
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Util.number <span style="color:#f92672">import</span> long_to_bytes <span style="color:#66d9ef">as</span> l2b
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Util.Padding <span style="color:#f92672">import</span> pad, unpad
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg1</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, x, a, b1):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>a <span style="color:#f92672">=</span> a
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> b1
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> x
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>m <span style="color:#f92672">=</span> p
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">next</span>(self):
+</span></span><span style="display:flex;"><span>        ret <span style="color:#f92672">=</span> self<span style="color:#f92672">.</span>x
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> (self<span style="color:#f92672">.</span>a <span style="color:#f92672">*</span> self<span style="color:#f92672">.</span>x <span style="color:#f92672">+</span> self<span style="color:#f92672">.</span>b) <span style="color:#f92672">%</span> self<span style="color:#f92672">.</span>m
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> ret
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg2</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, x, y, a, b1, b2):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>lcg <span style="color:#f92672">=</span> lcg1(x, a, b1)
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> y
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> b2
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>m <span style="color:#f92672">=</span> p
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">next</span>(self):
+</span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> (self<span style="color:#f92672">.</span>lcg<span style="color:#f92672">.</span>next() <span style="color:#f92672">*</span> self<span style="color:#f92672">.</span>x <span style="color:#f92672">+</span> self<span style="color:#f92672">.</span>b) <span style="color:#f92672">%</span> self<span style="color:#f92672">.</span>m
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> self<span style="color:#f92672">.</span>x
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">get_lcgs</span>(G):
+</span></span><span style="display:flex;"><span>    rb2 <span style="color:#f92672">=</span> G[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>univariate_polynomial()<span style="color:#f92672">.</span>roots(multiplicities<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)
+</span></span><span style="display:flex;"><span>    lcgs <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> b2 <span style="color:#f92672">in</span> rb2:
+</span></span><span style="display:flex;"><span>        x0  <span style="color:#f92672">=</span> G[<span style="color:#ae81ff">1</span>](b2<span style="color:#f92672">=</span>b2)<span style="color:#f92672">.</span>univariate_polynomial()<span style="color:#f92672">.</span>roots(multiplicities<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>        y0  <span style="color:#f92672">=</span> G[<span style="color:#ae81ff">2</span>](b2<span style="color:#f92672">=</span>b2)<span style="color:#f92672">.</span>univariate_polynomial()<span style="color:#f92672">.</span>roots(multiplicities<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>        a1  <span style="color:#f92672">=</span> G[<span style="color:#ae81ff">3</span>](b2<span style="color:#f92672">=</span>b2)<span style="color:#f92672">.</span>univariate_polynomial()<span style="color:#f92672">.</span>roots(multiplicities<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>        b1 <span style="color:#f92672">=</span> G[<span style="color:#ae81ff">4</span>](b2<span style="color:#f92672">=</span>b2)<span style="color:#f92672">.</span>univariate_polynomial()<span style="color:#f92672">.</span>roots(multiplicities<span style="color:#f92672">=</span><span style="color:#66d9ef">False</span>)[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>        
+</span></span><span style="display:flex;"><span>        lcg <span style="color:#f92672">=</span> lcg2(x0, y0, a1, b1, b2)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">5</span>):
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">assert</span> states[_] <span style="color:#f92672">==</span> lcg<span style="color:#f92672">.</span>next()
+</span></span><span style="display:flex;"><span>        lcgs<span style="color:#f92672">.</span>append(lcg)
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> lcgs
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">with</span> open(<span style="color:#e6db74">&#39;out.txt&#39;</span>) <span style="color:#66d9ef">as</span> f:
+</span></span><span style="display:flex;"><span>    p <span style="color:#f92672">=</span> int(f<span style="color:#f92672">.</span>readline())
+</span></span><span style="display:flex;"><span>    states <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">5</span>):
+</span></span><span style="display:flex;"><span>        states<span style="color:#f92672">.</span>append(int(f<span style="color:#f92672">.</span>readline()))
+</span></span><span style="display:flex;"><span>    iv <span style="color:#f92672">=</span> bytes<span style="color:#f92672">.</span>fromhex(f<span style="color:#f92672">.</span>readline())
+</span></span><span style="display:flex;"><span>    ct <span style="color:#f92672">=</span> bytes<span style="color:#f92672">.</span>fromhex(f<span style="color:#f92672">.</span>readline())
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>PR<span style="color:#f92672">.&lt;</span>x0,y0,a1,b1,b2<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> PolynomialRing(GF(p))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>lcg <span style="color:#f92672">=</span> lcg2(x0, y0, a1, b1, b2)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>eqs <span style="color:#f92672">=</span> []
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">5</span>):
+</span></span><span style="display:flex;"><span>    sym_out <span style="color:#f92672">=</span> lcg<span style="color:#f92672">.</span>next()
+</span></span><span style="display:flex;"><span>    eqs<span style="color:#f92672">.</span>append(states[i] <span style="color:#f92672">-</span> sym_out)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>I <span style="color:#f92672">=</span> Ideal(eqs)
+</span></span><span style="display:flex;"><span>G <span style="color:#f92672">=</span> I<span style="color:#f92672">.</span>groebner_basis()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>LCGs <span style="color:#f92672">=</span> get_lcgs(G)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> lcg <span style="color:#f92672">in</span> LCGs:
+</span></span><span style="display:flex;"><span>    r <span style="color:#f92672">=</span> int(lcg<span style="color:#f92672">.</span>next())
+</span></span><span style="display:flex;"><span>    key <span style="color:#f92672">=</span> pad(l2b(r<span style="color:#f92672">**</span><span style="color:#ae81ff">2</span>), <span style="color:#ae81ff">16</span>)
+</span></span><span style="display:flex;"><span>    cipher <span style="color:#f92672">=</span> AES<span style="color:#f92672">.</span>new(key, AES<span style="color:#f92672">.</span>MODE_CBC, iv<span style="color:#f92672">=</span>iv)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span>:
+</span></span><span style="display:flex;"><span>        flag <span style="color:#f92672">=</span> unpad(cipher<span style="color:#f92672">.</span>decrypt(ct), <span style="color:#ae81ff">16</span>)
+</span></span><span style="display:flex;"><span>        print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;</span><span style="color:#e6db74">{</span>r <span style="color:#e6db74">= }</span><span style="color:#e6db74">&#39;</span>)
+</span></span><span style="display:flex;"><span>        print(flag<span style="color:#f92672">.</span>decode())
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">except</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">pass</span>
+</span></span></code></pre></div><p>Output:</p>
+<pre tabindex="0"><code>r = 9562763730050056824
+LITCTF{groebner_so_op_this_would_be_very_awkward_if_you_used_resultants}
+</code></pre>
+		</div>
+	</article>
+</main>
+<aside>
+	<div>
+		<div>
+			<h3>LATEST POSTS</h3>
+		</div>
+		<div>
+			<ul>
+				
+				<li>2025-03-02 :: <a href="/posts/2025-03-02-litctf-2023-lcg-squared/">LITCTF 2023 - LCG... Squared?</a></li>
+				
+				<li>2025-03-01 :: <a href="/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/">(Crypto) Backdoor CTF 2024 - Hashing Frenzy</a></li>
+				
+			</ul>
+		</div>
+	</div>
+</aside>
+
+
+	<footer>
+	<p>&copy; 2025 :: <a href="http://localhost:1313/"
+			class='header-footer-anchor'><b>rasti&#39;s knowledge cave</b></a> ·
+		
+		<a href="https://github.com/rasti37" class='header-footer-anchor' target='_blank'><b>Github</b></a>
+	</p>
+</footer>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
+  integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"
+  integrity="sha384-Rma6DA2IPUwhNxmrB/7S3Tno0YY7sFu9WSYMCuulLhIqYSGZ2gKCJWIqhBWqMQfh" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js"
+  integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"
+  onload="renderMathInElement(document.body);"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true }, 
+        { left: '$', right: '$', display: false }, 
+        { left: '\\(', right: '\\)', display: false }, 
+        { left: '\\[', right: '\\]', display: true }, 
+      ],
+      throwOnError: false
+    });
+  });
+</script>
+
+</body>
+</html>

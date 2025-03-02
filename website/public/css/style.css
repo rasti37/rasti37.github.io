@@ -4,11 +4,16 @@ html {
 
 :root {
     --bgcolor: white;
-    --fontcolor: #444;
+    --fontcolor: #333;
     --linkcolor: #00e;
+    --hovercolor: #0077ff;
     --visitedcolor: #551a8b;
+    --visitedhovercolor: #dd6d8f;
+    --summaryhovercolor: #777;
     --precolor: #fff;
-    --prebgcolor: #000;
+    --prebgcolor: #4d4d4d;
+    --codenotprebgcolor: #606060;
+    --fontsize: 14px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -20,8 +25,9 @@ html {
         --precolor: #ccc;
         --prebgcolor: #1f1f1f;
         --visitedhovercolor: #ff6d8f;
-        --visitedhovercolor: #ff6d8f;
+        --summaryhovercolor: #aaa;
         --hovercolor: #0077ff;
+        --fontsize: 14px;
     }
 }
 
@@ -29,14 +35,14 @@ body {
     max-width: 800px;
     margin: 40px auto;
     padding: 0 10px;
-    font: 13px/1.5 monospace;
+    font: var(--fontsize)/1.5 monospace;
     color: var(--fontcolor);
     background: var(--bgcolor);
 }
 
 a:link {
     color: var(--linkcolor);
-    text-decoration: none;
+    /* text-decoration: none; */
 }
 
 a:link:hover {
@@ -59,27 +65,37 @@ h1,
 h2,
 h3 {
     line-height: 1.2;
+
 }
 
 p>code {
     color: var(--precolor);
     background: var(--prebgcolor);
-    padding: 3px;
-    border-radius: 3px;
+}
+
+pre,
+code {
+    padding: 0 !important;
+}
+
+:not(pre)>code {
+    padding: 2px !important;
+    background: var(--codenotprebgcolor);
 }
 
 code {
     color: var(--precolor);
     background: var(--prebgcolor);
-    /*padding:2px*/
+    border-radius: 3px;
+    text-wrap: wrap;
 }
 
 pre {
     color: var(--precolor);
     background: var(--prebgcolor) !important;
-    padding: 18px;
+    padding: 10px 15px 10px 15px !important;
     overflow-x: auto;
-	border-radius: 5px;
+    border-radius: 5px;
 }
 
 article {
@@ -110,11 +126,6 @@ img {
     margin: auto;
 }
 
-code {
-    text-wrap: wrap;
-    font-size: 13px;
-}
-
 a.header-footer-anchor {
     color: var(--linkcolor) !important;
 }
@@ -138,5 +149,5 @@ blockquote {
 }
 
 summary:hover {
-	color: #aaa;
+    color: var(--summaryhovercolor);
 }

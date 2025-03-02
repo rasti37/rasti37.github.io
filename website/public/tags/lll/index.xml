@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Lll on rasti&#39;s knowledge cave</title>
+    <title>LLL on rasti&#39;s knowledge cave</title>
     <link>http://localhost:1313/tags/lll/</link>
-    <description>Recent content in Lll on rasti&#39;s knowledge cave</description>
+    <description>Recent content in LLL on rasti&#39;s knowledge cave</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Sat, 01 Mar 2025 04:16:04 +0200</lastBuildDate>
@@ -13,7 +13,7 @@
       <link>http://localhost:1313/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</link>
       <pubDate>Sat, 01 Mar 2025 04:16:04 +0200</pubDate>
       <guid>http://localhost:1313/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</guid>
-      <description>This is test summary</description>
+      <description>Hashing Frenzy was a cool challenge related to problem solving via lattice reduction techniques. My goal is to showcase some of the intuition required to translate linear equations to instances of lattice problems. Hope you enjoy it :)</description>
     </item>
   </channel>
 </rss>

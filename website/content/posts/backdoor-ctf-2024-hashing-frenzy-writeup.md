@@ -5,13 +5,13 @@ slug: 2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup
 type: posts
 draft: false
 katex: true
-summary: 'This is test summary'
+summary: 'Hashing Frenzy was a cool challenge related to problem solving via lattice reduction techniques. My goal is to showcase some of the intuition required to translate linear equations to instances of lattice problems. Hope you enjoy it :)'
 categories:
   - ctf-writeups
 tags:
   - ctf-writeups
   - crypto
-  - lll
+  - LLL
 ---
 
 {{< toc >}}
@@ -51,10 +51,6 @@ tags:
         <tr>
           <td><b>Challenge Author</b></td>
           <td><code>kh4rg0sh</code></td>
-        </tr>
-        <tr>
-          <td><b>Writeup Author</b></td>
-          <td><code>r4sti</code></td>
         </tr>
       </tbody>
     </table>
