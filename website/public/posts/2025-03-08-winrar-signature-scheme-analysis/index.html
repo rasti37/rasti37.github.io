@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<link rel="icon" type="image/x-icon" href="/thumb.png">
+	<style type=text/css>body{font-family:monospace;}</style>
+	<title>Deep Dive into WinRAR&#39;s Signature Scheme</title>
+	
+	
+	<link rel="stylesheet" href="/css/style.css">
+	
+	
+</head>
+<body>
+	<header>
+	::::::::::::::::::::::::::::<br>
+	:: <a href="http://localhost:1313/" class='header-footer-anchor'>rasti&#39;s knowledge cave</a> ::<br>
+	::::::::::::::::::::::::::::
+	<div style="float: right;">nothing fancy yet</div><br>
+	<p>
+	<nav>
+		<a href="/" class='header-footer-anchor'><b>Start</b></a> ·
+		
+		
+		
+		<a href="/posts/" class='header-footer-anchor'><b>Posts</b></a> · 
+		
+		<a href="/categories/" class='header-footer-anchor'><b>Categories</b></a> · 
+		
+		<a href="/tags/" class='header-footer-anchor'><b>Tags</b></a>
+		
+	</nav>
+	</p>
+	
+</header>
+	
+<main>
+	<article>
+		<h1>Deep Dive into WinRAR&#39;s Signature Scheme</h1>
+		<small>Created at: 08/03/2025, 22:52:50</small><br>
+		<small>Last Updated at: 08/03/2025</small>
+		<br><br>.:
+		
+		
+		<a href="/tags/real-world" class='header-footer-anchor'>#real-world</a>, 
+		
+		<a href="/tags/sage" class='header-footer-anchor'>#sage</a>, 
+		
+		<a href="/tags/reverse-engineering" class='header-footer-anchor'>#reverse-engineering</a>
+		:.
+		<div>
+			<div style='cursor: pointer; border-radius: 3px; border:1px solid #888; padding: 7px; margin: 1.3em 0 1.3em 0;'>
+    <details>
+        <summary>Table of Contents</summary>
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#introduction">Introduction</a></li>
+  </ul>
+</nav>
+    </details>
+</div>
+<h1 id="introduction">Introduction</h1>
+<p>Upon reverse engineering WinRAR to understand its internal workings and how the license key validation works, I discovered that all the latest versions utilise a pretty ancient library for performing public key encryption and authentication — namely <a href="https://web.archive.org/web/19990117082016/http://ds.dial.pipex.com:80/george.barwood/v8/pegwit.htm" target="_blank" rel="noopener"><code>Pegwit (v8)</code></a>. Thankfully, its source code has now been uploaded to <a href="https://github.com/t-crest/patmos-benchmarks/tree/master/Mediabench/pegwit/src" target="_blank" rel="noopener">Github</a> so no need for the reader to hassle with a local copy.</p>
+<p>Pegwit implements Elliptic Curve Cryptography (ECC) in the finite field $\mathbb{F}_{2^{255}}$ and uses a variant of the Nyberg-Rueppel signature scheme for signing and verifying data. There will be a separate post entirely dedicated to WinRAR so we won&rsquo;t dive into more detail here. So &hellip; where is the problem? I would be pretty happy if I just sticked with the library&rsquo;s arithmetic and didn&rsquo;t attempt to reimplement this signature scheme in <em>SageMath</em>. This is where the problems arose.</p>
+<p>Languages like C can usually do arithmetic up to $64$ bits (or $32$ depending on the architecture) but usually in cryptography we work with much larger numbers so there must be a way to do arithmetic and store such large numbers efficiently in memory without any data loss. For this purpose, the pegwit library defines two fundamental structures; namely <code>vlPoint</code> (very long point) and <code>gfPoint</code> (galois field point).</p>
+
+		</div>
+	</article>
+</main>
+<aside>
+	<div>
+		<div>
+			<h3>RELATED POSTS</h3>
+		</div>
+		<div>
+			<ul>
+				
+				<li>2025-03-07 :: <a href="/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/">Computing Inverse Ring Homomorphisms (DIY)</a></li>
+				
+			</ul>
+		</div>
+	</div>
+</aside>
+
+
+	<footer>
+	<p>&copy; 2025 :: <a href="http://localhost:1313/"
+			class='header-footer-anchor'><b>rasti&#39;s knowledge cave</b></a> ·
+		
+		<a href="https://github.com/rasti37" class='header-footer-anchor' target='_blank'><b>Github</b></a>
+	</p>
+</footer>
+
+</body>
+</html>

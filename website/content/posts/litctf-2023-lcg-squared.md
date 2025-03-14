@@ -1,11 +1,11 @@
 ---
-title: "LITCTF 2023 - LCG... Squared?"
+title: "(Crypto) LITCTF 2023 - LCG... Squared?"
 date: 2025-03-02T03:31:49+02:00
 slug: 2025-03-02-litctf-2023-lcg-squared
 type: posts
 draft: false
 katex: true
-summary: 'This is test summary'
+summary: 'This was a challenge I enjoyed solving in LITCTF 2023. I considered it a good introduction to variable elimination techniques, such as Groebner Basis and resultants.'
 categories:
   - ctf-writeups
 tags:

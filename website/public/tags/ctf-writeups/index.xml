@@ -6,21 +6,28 @@
     <description>Recent content in Ctf-Writeups on rasti&#39;s knowledge cave</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 02 Mar 2025 03:31:49 +0200</lastBuildDate>
+    <lastBuildDate>Thu, 06 Mar 2025 23:26:11 +0200</lastBuildDate>
     <atom:link href="http://localhost:1313/tags/ctf-writeups/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>LITCTF 2023 - LCG... Squared?</title>
+      <title>(Crypto) TSJ CTF 2022 - babyRSA</title>
+      <link>http://localhost:1313/posts/2025-03-06-tsj-ctf-2022-babyrsa/</link>
+      <pubDate>Thu, 06 Mar 2025 23:26:11 +0200</pubDate>
+      <guid>http://localhost:1313/posts/2025-03-06-tsj-ctf-2022-babyrsa/</guid>
+      <description>One of the first challenges I had solved, back in 2022. This one taught me about resultants, coppersmith&amp;rsquo;s small roots and how to work with curves defined over a ring instead of a finite field.</description>
+    </item>
+    <item>
+      <title>(Crypto) LITCTF 2023 - LCG... Squared?</title>
       <link>http://localhost:1313/posts/2025-03-02-litctf-2023-lcg-squared/</link>
       <pubDate>Sun, 02 Mar 2025 03:31:49 +0200</pubDate>
       <guid>http://localhost:1313/posts/2025-03-02-litctf-2023-lcg-squared/</guid>
-      <description>This is test summary</description>
+      <description>This was a challenge I enjoyed solving in LITCTF 2023. I considered it a good introduction to variable elimination techniques, such as Groebner Basis and resultants.</description>
     </item>
     <item>
       <title>(Crypto) Backdoor CTF 2024 - Hashing Frenzy</title>
       <link>http://localhost:1313/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</link>
       <pubDate>Sat, 01 Mar 2025 04:16:04 +0200</pubDate>
       <guid>http://localhost:1313/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</guid>
-      <description>Hashing Frenzy was a cool challenge related to problem solving via lattice reduction techniques. My goal is to showcase some of the intuition required to translate linear equations to instances of lattice problems. Hope you enjoy it :)</description>
+      <description>Hashing Frenzy was a cool challenge related to problem solving via lattice reduction techniques. My goal is to showcase some of the intuition required to translate linear equations to instances of lattice problems.</description>
     </item>
   </channel>
 </rss>

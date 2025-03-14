@@ -3,30 +3,33 @@ html {
 }
 
 :root {
-    --bgcolor: white;
-    --fontcolor: #333;
-    --linkcolor: #00e;
-    --hovercolor: #0077ff;
-    --visitedcolor: #551a8b;
-    --visitedhovercolor: #dd6d8f;
-    --summaryhovercolor: #777;
+    --bgcolor: #eee;
+    --fontcolor: #3a5876;
+    --headerfooterlinkcolor: #5c0025;
+    --headerfooterlinkhovercolor: #dd6d8f;
+    --mainlinkcolor: #218daa;
+    --mainlinkhovercolor: #3355ee;
+    --outlinecolor: #218daa;
+    --summaryhovercolor: #888;
     --precolor: #fff;
-    --prebgcolor: #4d4d4d;
-    --codenotprebgcolor: #606060;
+    --prebgcolor: #3c4856;
+    --codenotprebgcolor: #3c4856;
     --fontsize: 14px;
 }
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --bgcolor: black;
+        --bgcolor: #111;
         --fontcolor: white;
-        --linkcolor: #5bf;
-        --visitedcolor: #c070f2;
-        --precolor: #ccc;
-        --prebgcolor: #1f1f1f;
-        --visitedhovercolor: #ff6d8f;
+        --headerfooterlinkcolor: #ffd32c;
+        --headerfooterlinkhovercolor: #ddb510;
+        --mainlinkcolor: #c0564a;
+        --mainlinkhovercolor: #fd8b7a;
+        --outlinecolor: #c0564a;
         --summaryhovercolor: #aaa;
-        --hovercolor: #0077ff;
+        --precolor: #ccc;
+        --prebgcolor: #3d3d3d;
+        --codenotprebgcolor: #4e4e4e;
         --fontsize: 14px;
     }
 }
@@ -40,32 +43,44 @@ body {
     background: var(--bgcolor);
 }
 
-a:link {
-    color: var(--linkcolor);
+a {
+    color: var(--mainlinkcolor) !important;
     /* text-decoration: none; */
 }
 
-a:link:hover {
-    color: var(--hovercolor);
+a:hover {
+    color: var(--mainlinkhovercolor) !important;
 }
 
+/* 
 a:visited {
-    color: var(--visitedcolor);
+    color: var(--mainlinkcolor);
 }
 
 a:visited:hover {
-    color: var(--visitedhovercolor);
-}
+    color: var(--mainlinkhovercolor);
+} 
 
 a:active {
-    color: var(--visitedcolor);
-}
+    color: var(--mainlinkcolor);
+} */
+
 
 h1,
 h2,
 h3 {
     line-height: 1.2;
+}
 
+h1:has(a) {
+    text-shadow: var(--outlinecolor) 1px 0 5px !important;
+}
+
+h1:not(:has(a)),
+h2:not(:has(a)),
+h3:not(:has(a)),
+h4:not(:has(a)) {
+    text-shadow: 1px 1px 11px var(--outlinecolor), 0 0 2px var(--outlinecolor), 0 0 3px var(--outlinecolor) !important;
 }
 
 p>code {
@@ -79,7 +94,7 @@ code {
 }
 
 :not(pre)>code {
-    padding: 2px !important;
+    padding: 1px !important;
     background: var(--codenotprebgcolor);
 }
 
@@ -127,25 +142,40 @@ img {
 }
 
 a.header-footer-anchor {
-    color: var(--linkcolor) !important;
+    color: var(--headerfooterlinkcolor) !important;
 }
 
 a.header-footer-anchor:hover {
-    color: var(--hovercolor) !important;
+    color: var(--headerfooterlinkhovercolor) !important;
 }
 
 a.header-footer-anchor:visited:hover {
-    color: var(--hovercolor) !important;
+    color: var(--headerfooterlinkhovercolor) !important;
 }
 
-/* Configure quotes */
 blockquote {
     font-style: italic;
-    font-size: 13px;
+    font-size: 11px;
     text-align: center;
     text-indent: 0;
-    margin-left: 1em;
+    margin-left: 0.7em;
     border-left: 1px solid #888;
+}
+
+h1 {
+    font-size: 1.55em;
+}
+
+h2 {
+    font-size: 1.33em;
+}
+
+h3 {
+    font-size: 1.20em;
+}
+
+blockquote>p {
+    padding: 0.5em 0 0.5em 1em;
 }
 
 summary:hover {

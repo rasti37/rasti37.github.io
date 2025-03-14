@@ -5,7 +5,7 @@ slug: 2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup
 type: posts
 draft: false
 katex: true
-summary: 'Hashing Frenzy was a cool challenge related to problem solving via lattice reduction techniques. My goal is to showcase some of the intuition required to translate linear equations to instances of lattice problems. Hope you enjoy it :)'
+summary: 'Hashing Frenzy was a cool challenge related to problem solving via lattice reduction techniques. My goal is to showcase some of the intuition required to translate linear equations to instances of lattice problems.'
 categories:
   - ctf-writeups
 tags:

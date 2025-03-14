@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Irl on rasti&#39;s knowledge cave</title>
+    <link>http://localhost:1313/tags/irl/</link>
+    <description>Recent content in Irl on rasti&#39;s knowledge cave</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 08 Mar 2025 22:52:50 +0200</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/irl/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Deep Dive into WinRAR&#39;s Signature Scheme</title>
+      <link>http://localhost:1313/posts/2025-03-08-winrar-signature-scheme-analysis/</link>
+      <pubDate>Sat, 08 Mar 2025 22:52:50 +0200</pubDate>
+      <guid>http://localhost:1313/posts/2025-03-08-winrar-signature-scheme-analysis/</guid>
+      <description>This is test summary</description>
+    </item>
+  </channel>
+</rss>

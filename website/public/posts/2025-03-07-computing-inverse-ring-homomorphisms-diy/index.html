@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<link rel="icon" type="image/x-icon" href="/thumb.png">
+	<style type=text/css>body{font-family:monospace;}</style>
+	<title>Computing Inverse Ring Homomorphisms (DIY)</title>
+	
+	
+	<link rel="stylesheet" href="/css/style.css">
+	
+	
+</head>
+<body>
+	<header>
+	::::::::::::::::::::::::::::<br>
+	:: <a href="http://localhost:1313/" class='header-footer-anchor'>rasti&#39;s knowledge cave</a> ::<br>
+	::::::::::::::::::::::::::::
+	<div style="float: right;">nothing fancy yet</div><br>
+	<p>
+	<nav>
+		<a href="/" class='header-footer-anchor'><b>Start</b></a> ·
+		
+		
+		
+		<a href="/posts/" class='header-footer-anchor'><b>Posts</b></a> · 
+		
+		<a href="/categories/" class='header-footer-anchor'><b>Categories</b></a> · 
+		
+		<a href="/tags/" class='header-footer-anchor'><b>Tags</b></a>
+		
+	</nav>
+	</p>
+	
+</header>
+	
+<main>
+	<article>
+		<h1>Computing Inverse Ring Homomorphisms (DIY)</h1>
+		<small>Created at: 07/03/2025, 00:01:27</small><br>
+		<small>Last Updated at: 07/03/2025</small>
+		<br><br>.:
+		
+		
+		<a href="/tags/real-world" class='header-footer-anchor'>#real-world</a>, 
+		
+		<a href="/tags/sage" class='header-footer-anchor'>#sage</a>
+		:.
+		<div>
+			<div style='cursor: pointer; border-radius: 3px; border:1px solid #888; padding: 7px; margin: 1.3em 0 1.3em 0;'>
+    <details>
+        <summary>Table of Contents</summary>
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#the-problem-statement">The problem statement</a></li>
+    <li><a href="#mathematical-notation">Mathematical Notation</a></li>
+    <li><a href="#translating-maths-into-code">Translating maths into code</a>
+      <ul>
+        <li><a href="#defining-the-parameters-in-sage">Defining the parameters in Sage</a></li>
+        <li><a href="#defining-the-homomorphism-f">Defining the homomorphism $f$</a></li>
+      </ul>
+    </li>
+    <li><a href="#problem-demonstration">Problem demonstration</a></li>
+    <li><a href="#defining-the-inverse-ring-homomorphism-ourselves">Defining the inverse ring homomorphism ourselves</a>
+      <ul>
+        <li><a href="#first-thoughts">First thoughts</a></li>
+        <li><a href="#spoiler-alert---solution-peeking">Spoiler Alert - Solution Peeking</a></li>
+        <li><a href="#yes-linear-algebra--again">Yes. Linear algebra &hellip; again</a>
+          <ul>
+            <li><a href="#problem-a_i-and-z-are-defined-over-different-fields">PROBLEM: $a_i$ and $z$ are defined over different fields</a></li>
+          </ul>
+        </li>
+        <li><a href="#solving-the-system-over-the-base-field-mathbbf_2">Solving the system over the base field $\mathbb{F}_2$</a>
+          <ul>
+            <li><a href="#constructing-the-target-vector-t">Constructing the target vector $T$</a></li>
+            <li><a href="#constructing-the-matrix-m">Constructing the matrix $M$</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+    </details>
+</div>
+<h1 id="introduction">Introduction</h1>
+<p>In this post, we will get our hands dirty with applied abstract algebra. Mathematical resources usually lack practical examples which would significantly amplify the learning experience of the readers. This post aims at bridging the gap between programming and mathematics. Thankfully, there is already such a robust bridge, namely <a href="https://www.sagemath.org/" target="_blank" rel="noopener">SageMath</a>, but (un)fortunately for me, it didn&rsquo;t include an implementation for what I wanted to achieve. Thereby, I had to do it myself👷.</p>
+<p>I&rsquo;m not a mathematician so there might be loose ends here and there. But hey, as long as we grasp the main idea, that&rsquo;s all that really matters. Notation is for the pros and I&rsquo;m definitely not claiming to be one :)</p>
+<h1 id="the-problem-statement">The problem statement</h1>
+<p>My initial goal was to reimplement WinRAR&rsquo;s signature scheme in SageMath and I thought I was nearly done — until I hit the final boss. There&rsquo;s an entire blog post in the pipeline, entirely dedicated to how WinRAR signs and verifies data, so stay tuned :)</p>
+<p>Our current problem can be briefly stated as:</p>
+<blockquote>
+<p>SageMath doesn&rsquo;t provide a way to compute the inverse ring homomorphism when the domain is a quotient polynomial ring over some finite field and the codomain is a finite field of the same degree.</p></blockquote>
+<h1 id="mathematical-notation">Mathematical Notation</h1>
+<p>We will use the following notation:</p>
+<ul>
+<li>$\mathbb{F}_{p}$. The finite field of prime order $p$.</li>
+<li>$\mathbb{F}_{p^n}$. The composite field over the finite field $\mathbb{F}_p$. Its elements are $(n-1)$-degree polynomials with coefficients $\in \mathbb{F}_p$.</li>
+<li>$\mathbb{K}[X]$. The polynomial ring in $X$ over the field $\mathbb{K}$. It is basically the set of $(n-1)$-degree polynomials $P$ of the form:</li>
+</ul>
+<p>$$P(X) = a_0 + a_1X + a_2X^2 + &hellip; + a_nX^n$$</p>
+<p>     where $a_i \in \mathbb{K}$.</p>
+<ul>
+<li>
+<p>$\mathbb{K}[Y]\ /\ P(Y)$. The quotient polynomial ring, obtained by taking all polynomials in $\mathbb{K}[Y]$ and doing arithmetic polynomial operations (addition, multiplication, division) &ldquo;modulo&rdquo; the polynomial $P(Y)$. If $P$ is irreducible, then the quotient polynomial ring forms a <em>field</em>.</p>
+</li>
+<li>
+<p>$f: A \rightarrow B$. The homomorphism $f$ that maps elements from the domain $A$ to the codomain $B$.</p>
+</li>
+</ul>
+<h1 id="translating-maths-into-code">Translating maths into code</h1>
+<p>In this post, we&rsquo;ll be cooking with the field $\mathbb{F}_{{(2^2)}^3}$. More specifically, we define:</p>
+<p>$$A = F_{2^2}[y]\ /\ (y^3+y+1)$$</p>
+<p>In natural language:</p>
+<blockquote>
+<p>$A$ is the set of degree-$2$ polynomials in $y$ with coefficients in $\mathbb{F}_{2^2}$. But hey, when you do operations with these polynomials, reduce the result modulo the irreducible polynomial $y^3+y+1$.</p></blockquote>
+<!-- Notice that the degree of the polynomials in $A$ should be less than $3$; the degree of the irreducible polynomial. Last but not least, the field $\mathbb{F}_{2^2}$ contains 4 elements which are ***at most*** degree-$1$ polynomials with coefficients in $\mathbb{F}_2$; namely: $\\{0, 1, a, a+1\\}$. -->
+<p>It&rsquo;s time for converting the nitty-gritty maths into code.</p>
+<h2 id="defining-the-parameters-in-sage">Defining the parameters in Sage</h2>
+<p>First, we define $\mathbb{F}_{2^2}$:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>F4<span style="color:#f92672">.&lt;</span>a<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> GF(<span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">2</span>)
+</span></span></code></pre></div><p>Then, the polynomial ring $\mathbb{F}_{2^2}[y]$.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>PR<span style="color:#f92672">.&lt;</span>y<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> PolynomialRing(F4)
+</span></span></code></pre></div><p>The polynomial ring consists of an infinite set of polynomials with coefficients in $\mathbb{F}_{2^2}$. Some elements are shown below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: <span style="color:#66d9ef">for</span> d <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">5</span>, <span style="color:#ae81ff">10</span>): print(PR<span style="color:#f92672">.</span>random_element(d))
+</span></span><span style="display:flex;"><span>(a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> y<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> a<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">+</span> y <span style="color:#f92672">+</span> a
+</span></span><span style="display:flex;"><span>a<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">6</span> <span style="color:#f92672">+</span> y<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> y<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> a<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">+</span> (a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> y
+</span></span><span style="display:flex;"><span>a<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">7</span> <span style="color:#f92672">+</span> (a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">6</span> <span style="color:#f92672">+</span> (a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> a<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">+</span> a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>a<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">8</span> <span style="color:#f92672">+</span> a<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">7</span> <span style="color:#f92672">+</span> a<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">6</span> <span style="color:#f92672">+</span> (a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> a<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> (a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> a<span style="color:#f92672">*</span>y <span style="color:#f92672">+</span> a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">9</span> <span style="color:#f92672">+</span> a<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">7</span> <span style="color:#f92672">+</span> y<span style="color:#f92672">^</span><span style="color:#ae81ff">6</span> <span style="color:#f92672">+</span> y<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> (a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> y<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> y <span style="color:#f92672">+</span> a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span></code></pre></div><p>Then, we define our irreducible polynomial $P(y) = y^3 + y + 1$ and the quotient polynomial ring $Q = F_{2^2}[y]\ /\ P(y)$:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>P <span style="color:#f92672">=</span> y<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">+</span> y <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">assert</span> P<span style="color:#f92672">.</span>is_irreducible()
+</span></span><span style="display:flex;"><span>Q<span style="color:#f92672">.&lt;</span>w<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> PR<span style="color:#f92672">.</span>quotient(P)
+</span></span></code></pre></div><p>Since $P$ is irreducible, $Q$ has maximum order ${(2^2)}^3 = 2^{2 \cdot 3} = 2^6 = 64$. All the elements are listed below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: len(list(Q))
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">64</span>
+</span></span><span style="display:flex;"><span>sage: str(list(Q))
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;[0, a, a + 1, 1, a*w, a*w + a, a*w + a + 1, a*w + 1, (a + 1)*w, (a + 1)*w + a, (a + 1)*w + a + 1, (a + 1)*w + 1, w, w + a, w + a + 1, w + 1, a*w^2, a*w^2 + a, a*w^2 + a + 1, a*w^2 + 1, a*w^2 + a*w, a*w^2 + a*w + a, a*w^2 + a*w + a + 1, a*w^2 + a*w + 1, a*w^2 + (a + 1)*w, a*w^2 + (a + 1)*w + a, a*w^2 + (a + 1)*w + a + 1, a*w^2 + (a + 1)*w + 1, a*w^2 + w, a*w^2 + w + a, a*w^2 + w + a + 1, a*w^2 + w + 1, (a + 1)*w^2, (a + 1)*w^2 + a, (a + 1)*w^2 + a + 1, (a + 1)*w^2 + 1, (a + 1)*w^2 + a*w, (a + 1)*w^2 + a*w + a, (a + 1)*w^2 + a*w + a + 1, (a + 1)*w^2 + a*w + 1, (a + 1)*w^2 + (a + 1)*w, (a + 1)*w^2 + (a + 1)*w + a, (a + 1)*w^2 + (a + 1)*w + a + 1, (a + 1)*w^2 + (a + 1)*w + 1, (a + 1)*w^2 + w, (a + 1)*w^2 + w + a, (a + 1)*w^2 + w + a + 1, (a + 1)*w^2 + w + 1, w^2, w^2 + a, w^2 + a + 1, w^2 + 1, w^2 + a*w, w^2 + a*w + a, w^2 + a*w + a + 1, w^2 + a*w + 1, w^2 + (a + 1)*w, w^2 + (a + 1)*w + a, w^2 + (a + 1)*w + a + 1, w^2 + (a + 1)*w + 1, w^2 + w, w^2 + w + a, w^2 + w + a + 1, w^2 + w + 1]&#39;</span>
+</span></span></code></pre></div><p>Each polynomial in the infinite set of $\text{PR}$ eventually reduces to one of these $64$ polynomials.</p>
+<h2 id="defining-the-homomorphism-f">Defining the homomorphism $f$</h2>
+<p>Here comes the fun part.</p>
+<p>As aforementioned, $P$ is irreducible which makes $Q$ a <em><strong>field</strong></em>. But is there any other field with the same number of elements as $Q$? One might immediately think of $\mathbb{F}_{2^6} = \mathbb{F}_{64}$ and they&rsquo;d be right! In fact, the elements of $\mathbb{F}_{64}$ are listed below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: F64<span style="color:#f92672">.&lt;</span>z<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> GF(<span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">6</span>)
+</span></span><span style="display:flex;"><span>sage: len(list(F64))
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">64</span>
+</span></span><span style="display:flex;"><span>sage: str(list(F64))
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;[0, z, z^2, z^3, z^4, z^5, z^4 + z^3 + z + 1, z^5 + z^4 + z^2 + z, z^5 + z^4 + z^2 + z + 1, z^5 + z^4 + z^2 + 1, z^5 + z^4 + 1, z^5 + z^4 + z^3 + 1, z^5 + z^3 + 1, z^3 + 1, z^4 + z, z^5 + z^2, z^4 + z + 1, z^5 + z^2 + z, z^4 + z^2 + z + 1, z^5 + z^3 + z^2 + z, z^2 + z + 1, z^3 + z^2 + z, z^4 + z^3 + z^2, z^5 + z^4 + z^3, z^5 + z^3 + z + 1, z^3 + z^2 + 1, z^4 + z^3 + z, z^5 + z^4 + z^2, z^5 + z^4 + z + 1, z^5 + z^4 + z^3 + z^2 + 1, z^5 + 1, z^4 + z^3 + 1, z^5 + z^4 + z, z^5 + z^4 + z^3 + z^2 + z + 1, z^5 + z^2 + 1, z^4 + 1, z^5 + z, z^4 + z^3 + z^2 + z + 1, z^5 + z^4 + z^3 + z^2 + z, z^5 + z^2 + z + 1, z^4 + z^2 + 1, z^5 + z^3 + z, z^3 + z^2 + z + 1, z^4 + z^3 + z^2 + z, z^5 + z^4 + z^3 + z^2, z^5 + z + 1, z^4 + z^3 + z^2 + 1, z^5 + z^4 + z^3 + z, z^5 + z^3 + z^2 + z + 1, z^2 + 1, z^3 + z, z^4 + z^2, z^5 + z^3, z^3 + z + 1, z^4 + z^2 + z, z^5 + z^3 + z^2, z + 1, z^2 + z, z^3 + z^2, z^4 + z^3, z^5 + z^4, z^5 + z^4 + z^3 + z + 1, z^5 + z^3 + z^2 + 1, 1]&#39;</span>
+</span></span></code></pre></div><p>It turns out that there exists a homomorphism (from the Greek «ὅμοιος» + «μορφή», &ldquo;similar form&rdquo;) that connects the elements of $Q$ and $F_{64}$. In fact, both fields share the same cardinality ($64$ elements) which is a fundamental requirement for the homomorphism to be an isomorphism. However, this alone is merely an indication and does not guarantee isomorphism, as the homomorphism must also be bijective (i.e. injective and surjective).</p>
+<!--One of the requirements for two groups to be homomorphic is to have the same cardinality which is true in our case. -->
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: len(Q) <span style="color:#f92672">==</span> len(F64)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">True</span>
+</span></span></code></pre></div><p>Take a random element in $Q$, say $r = w^2 + a \cdot w + 1$. Since these groups are &ldquo;connected&rdquo; through the homomorphism, there <strong>might</strong> be an element of $\mathbb{F}_{64}$ that maps to $r$ (<em>this isn&rsquo;t always the case as the homomorphism must be injective, and we haven&rsquo;t proven that yet</em>). I might write another blog post in the future trying to break down injective and surjective maps with practical examples. For now, let&rsquo;s move forward and define the homomorphism between $Q$ and $\mathbb{F}_{64}$.</p>
+<div style='text-align: center'><b><u>DISCLAIMER: Huge thanks to @A~Z for assisting me with his algebra and SageMath know-how.</u></b></div>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: SF<span style="color:#f92672">.&lt;</span>z<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> P<span style="color:#f92672">.</span>splitting_field()
+</span></span><span style="display:flex;"><span>sage: r <span style="color:#f92672">=</span> P<span style="color:#f92672">.</span>change_ring(SF)<span style="color:#f92672">.</span>any_root()
+</span></span><span style="display:flex;"><span>sage: f <span style="color:#f92672">=</span> Q<span style="color:#f92672">.</span>hom([r,], codomain<span style="color:#f92672">=</span>F64)
+</span></span><span style="display:flex;"><span>sage: f
+</span></span><span style="display:flex;"><span>Ring morphism:
+</span></span><span style="display:flex;"><span>  From: Univariate Quotient Polynomial Ring <span style="color:#f92672">in</span> z over Finite Field <span style="color:#f92672">in</span> a of size <span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#66d9ef">with</span> modulus y<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">+</span> y <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  To:   Finite Field <span style="color:#f92672">in</span> w of size <span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">6</span>
+</span></span><span style="display:flex;"><span>  Defn: w <span style="color:#f92672">|--&gt;</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span></code></pre></div><ol>
+<li>
+<p>What the heck if <code>splitting_field</code>? I don&rsquo;t really know in detail but think of it as an extension field that $P$ is raised to. We will treat it as equivalent to $\mathbb{F}_{64}$.</p>
+</li>
+<li>
+<p>What about $r$? $r$ is the root of $P$ in $\mathbb{F}_{64}$.</p>
+</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: P<span style="color:#f92672">.</span>change_ring(SF)
+</span></span><span style="display:flex;"><span>y<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">+</span> y <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>sage: P<span style="color:#f92672">.</span>change_ring(SF)<span style="color:#f92672">.</span>any_root()
+</span></span><span style="display:flex;"><span>z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> z
+</span></span><span style="display:flex;"><span>sage: P<span style="color:#f92672">.</span>change_ring(SF)<span style="color:#f92672">.</span>any_root()
+</span></span><span style="display:flex;"><span>z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>sage: factor(P<span style="color:#f92672">.</span>change_ring(SF))
+</span></span><span style="display:flex;"><span>(y <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> z <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">*</span> (y <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> z) <span style="color:#f92672">*</span> (y <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)
+</span></span></code></pre></div><p>From sage <a href="https://doc.sagemath.org/html/en/reference/polynomial_rings/sage/rings/polynomial/polynomial_element.html#sage.rings.polynomial.polynomial_element.Polynomial.any_root" target="_blank" rel="noopener">docs</a>:</p>
+<blockquote>
+<p>For finite fields, any_root() is non-deterministic when finding linear roots of a polynomial over the base ring.</p></blockquote>
+<p>Essentially, this provides way to determine the images of $Q$&rsquo;s generator $w$ in the codomain $\mathbb{F}_{64}$. Any of the following mappings would construct a valid homomorphism $f$:</p>
+<p>$$
+w \rightarrow z^4 + z^2 + z + 1\\
+w \rightarrow z^5 + z\\
+w \rightarrow z^5 + z^4 + z^2 + 1\\
+$$</p>
+<p>Each of these images tells the homomorphism how to map elements.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: f <span style="color:#f92672">=</span> Q<span style="color:#f92672">.</span>hom([z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span><span style="color:#f92672">+</span>z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span><span style="color:#f92672">+</span>z<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>], codomain<span style="color:#f92672">=</span>F64) ; f(w<span style="color:#f92672">^</span><span style="color:#ae81ff">6</span>)
+</span></span><span style="display:flex;"><span>z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> z <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>sage: f <span style="color:#f92672">=</span> Q<span style="color:#f92672">.</span>hom([z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span><span style="color:#f92672">+</span>z], codomain<span style="color:#f92672">=</span>F64) ; f(w<span style="color:#f92672">^</span><span style="color:#ae81ff">6</span>)
+</span></span><span style="display:flex;"><span>z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>sage: f <span style="color:#f92672">=</span> Q<span style="color:#f92672">.</span>hom([z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span><span style="color:#f92672">+</span>z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span><span style="color:#f92672">+</span>z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span><span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>], codomain<span style="color:#f92672">=</span>F64) ; f(w<span style="color:#f92672">^</span><span style="color:#ae81ff">6</span>)
+</span></span><span style="display:flex;"><span>z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> z
+</span></span></code></pre></div><h1 id="problem-demonstration">Problem demonstration</h1>
+<p>So far, so good. We found a way to map elements from $Q \rightarrow \mathbb{F}_{64}$ using $f$. What if we want to go in the opposite direction? In other words, given the image $f(w^6) = z^4 + z^2 + z$, can we determine $w^6 = f^{-1}(z^4 + z^2 + z)$?</p>
+<p>This boils down to constructing the inverse ring homomorphism $f^{-1}$:</p>
+<p>$$f^{-1}: \mathbb{F}_{64} \rightarrow Q$$</p>
+<p>$f^{-1}$ exists if and only if $Q$ and $\mathbb{F}_{64}$ are <em><strong>isomorphic</strong></em>. For a homomorphism to be invertible, it must be bijective, which means it needs to be both injective and surjective (see SageMath source <a href="https://github.com/sagemath/sage/blob/master/src/sage/rings/morphism.pyx#L1637" target="_blank" rel="noopener">code</a>). Let&rsquo;s try computing $f^{-1}$:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: f<span style="color:#f92672">.</span>inverse()
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># &lt;REDACTED&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">NotImplementedError</span>: base rings must be equal
+</span></span><span style="display:flex;"><span>sage: f<span style="color:#f92672">.</span>is_invertible()
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># &lt;REDACTED&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">NotImplementedError</span>: base rings must be equal
+</span></span><span style="display:flex;"><span>sage: f<span style="color:#f92672">.</span>is_injective()
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">True</span>
+</span></span><span style="display:flex;"><span>sage: f<span style="color:#f92672">.</span>is_surjective()
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># &lt;REDACTED&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">NotImplementedError</span>: base rings must be equal
+</span></span></code></pre></div><p><span style='font-size:2em;'>😰</span></p>
+<p>This is where things got serious. While digging into SageMath&rsquo;s source <a href="https://github.com/sagemath/sage/blob/master/src/sage/rings/morphism.pyx#L1291" target="_blank" rel="noopener">code</a>, I discovered that the actual error originates from the function <code>sage.rings.morphism.RingHomomorphism._graph_ideal</code>. The <code>NotImplementedError</code> suggests that nobody has really needed this specific case before, so there&rsquo;s simply no implementation for it. We can confirm that the base rings are indeed different.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: f<span style="color:#f92672">.</span>domain()
+</span></span><span style="display:flex;"><span>Univariate Quotient Polynomial Ring <span style="color:#f92672">in</span> w over Finite Field <span style="color:#f92672">in</span> a of size <span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#66d9ef">with</span> modulus y<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">+</span> y <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>sage: f<span style="color:#f92672">.</span>codomain()
+</span></span><span style="display:flex;"><span>Finite Field <span style="color:#f92672">in</span> z of size <span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">6</span>
+</span></span><span style="display:flex;"><span>sage: <span style="color:#66d9ef">assert</span> f<span style="color:#f92672">.</span>domain() <span style="color:#f92672">==</span> Q
+</span></span><span style="display:flex;"><span>sage: <span style="color:#66d9ef">assert</span> f<span style="color:#f92672">.</span>codomain() <span style="color:#f92672">==</span> F64
+</span></span><span style="display:flex;"><span>sage: f<span style="color:#f92672">.</span>domain()<span style="color:#f92672">.</span>base_ring()
+</span></span><span style="display:flex;"><span>Finite Field <span style="color:#f92672">in</span> a of size <span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>sage: f<span style="color:#f92672">.</span>codomain()<span style="color:#f92672">.</span>base_ring()
+</span></span><span style="display:flex;"><span>Finite Field of size <span style="color:#ae81ff">2</span>
+</span></span></code></pre></div><p>But I&rsquo;m too convinced that these two fields are indeed isomorphic.</p>
+<p>&hellip; until &hellip;</p>
+<blockquote>
+<p>I assume just defining the inverse yourself?</p></blockquote>
+<blockquote>
+<p>but yeah you probably just want to define the inverse yourself</p></blockquote>
+<p>
+<figure>
+  <img src="discord-interesting-project.png" alt="" />
+</figure>
+
+
+</p>
+<p><span style='font-size:2em;'>👷🏼‍♂️👷🏼‍♂️</span></p>
+<h1 id="defining-the-inverse-ring-homomorphism-ourselves">Defining the inverse ring homomorphism ourselves</h1>
+<h2 id="first-thoughts">First thoughts</h2>
+<p>Without any clear plan on HOW to do it, I suspected that the key was to find a polynomial $p(w)$ such that $z \rightarrow p(r)$. If that worked, I could build $f^{-1}$ on top of that mapping. Big kudos to some fellow CryptoHackers for confirming this suspicion!</p>
+<p>Additionally, @A~Z shared a couple of functions with me, but they didn&rsquo;t quite work for my case. I ended up having to figure out what to tweak to make them work; which, in the end, wasn&rsquo;t really worth the effort. Consequently, I decided to write my own function to get the job done.</p>
+<p>A polynomial $p$ in $w$ has the following form:</p>
+<p>$$p(w) = a_0 + a_1w + a_2w^2$$</p>
+<p>where $w$ is the generator of $Q$ and $a_i \in F_{2^2}$. Our task is to find the cofficients $\{a_0, a_1, a_2\}$.</p>
+<h2 id="spoiler-alert---solution-peeking">Spoiler Alert - Solution Peeking</h2>
+<p>Before diving into the real thing, we first need to verify whether such polynomial $p$ even exists at all. Since our example field has a relatively small cardinality, I can simply bruteforce all elements of $Q$ and check if $p(r) = z$ held true.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">for</span> p <span style="color:#f92672">in</span> list(Q):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> p<span style="color:#f92672">.</span>lift()(r) <span style="color:#f92672">==</span> z:
+</span></span><span style="display:flex;"><span>        print(p)
+</span></span></code></pre></div><p>Output:</p>
+<pre tabindex="0"><code>a*w^2 + w + 1
+</code></pre><p>Bingo! The vector $\vec{s} = \{1, 1, a\}$ is the coefficient vector we are looking for. This will serve as our sanity check when verifying the solution&rsquo;s correctness.</p>
+<p style='text-align: center'><small><i>Since <code>any_root</code> is non-deterministic, the polynomial $p$ might vary but the core idea remains unchanged.</i></small></p>
+<p>Now, back to the math&hellip;</p>
+<h2 id="yes-linear-algebra--again">Yes. Linear algebra &hellip; again</h2>
+<p>The only relation we know is:</p>
+<p>$$p(r) = z$$</p>
+<p>or equivalently</p>
+<p>$$a_0 + a_1r + a_2r^2 = z$$</p>
+<p>This is where I stumbled upon <a href="https://math.stackexchange.com/questions/4069654/finding-inverse-in-a-quotient-ring" target="_blank" rel="noopener">this</a> thread and it just clicked. This problem can be reframed as a linear algebra problem where, given $M$ and $T$ we need to find the unknown vector:</p>
+<p>$$\vec{s} = \begin{pmatrix}a_0 &amp; a_1 &amp; a_2\end{pmatrix}$$</p>
+<p>such that:</p>
+<p>$$M \cdot \vec{s} = T \Rightarrow \\ \vec{s} = M^{-1}T$$</p>
+<p>The equation can be translated to:</p>
+<p>$$\begin{pmatrix}1 &amp; r &amp; r^2\end{pmatrix} \begin{pmatrix}a_0 &amp; a_1 &amp; a_2\end{pmatrix} = z$$</p>
+<p>Since both $M$ and $T$ are known, we should be able to recover the unknown vector $\vec{s}$ using SageMath&rsquo;s <a href="https://doc.sagemath.org/html/en/tutorial/tour_linalg.html#linear-algebra" target="_blank" rel="noopener"><code>solve_right</code></a>. Right?</p>
+<p>Well&hellip; not quite. There&rsquo;s a problem.</p>
+<h3 id="problem-a_i-and-z-are-defined-over-different-fields">PROBLEM: $a_i$ and $z$ are defined over different fields</h3>
+<p>The issue is that the coefficients $a_i$ are defined over $F_{2^2}$ while $r, z$ are defined over $F_{2^6}$. This field mismatch prevents us from directly calling <code>solve_right</code>, as SageMath doesn&rsquo;t inherently know which field to use to solve the equation.</p>
+<p>We should agree in a common field to be able to solve the equation:</p>
+<ul>
+<li>
+<p>What about $F_{2^2}$? Hmm&hellip; since $z$ is defined over a larger field, it can&rsquo;t be expressed within a smaller field such as $\mathbb{F}_{2^2}$. This makes it impossible to define $z$ in $\mathbb{F}_{2^2}$.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: F4(z)
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># &lt;REDACTED&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">ValueError</span>: z <span style="color:#f92672">is</span> <span style="color:#f92672">not</span> <span style="color:#f92672">in</span> the image of (map internal to coercion system <span style="color:#f92672">--</span> copy before use)
+</span></span><span style="display:flex;"><span>Ring morphism:
+</span></span><span style="display:flex;"><span>  From: Finite Field <span style="color:#f92672">in</span> a of size <span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span>  To:   Finite Field <span style="color:#f92672">in</span> z of size <span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">6</span>
+</span></span></code></pre></div></li>
+<li>
+<p>What about $F_{2^6}$? Let&rsquo;s try that in Sage:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: M <span style="color:#f92672">=</span> Matrix(F64, [<span style="color:#ae81ff">1</span>, r, r<span style="color:#f92672">**</span><span style="color:#ae81ff">2</span>])
+</span></span><span style="display:flex;"><span>sage: T <span style="color:#f92672">=</span> vector([z])
+</span></span><span style="display:flex;"><span>sage: M<span style="color:#f92672">.</span>solve_right(T)
+</span></span><span style="display:flex;"><span>(z, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>)
+</span></span></code></pre></div></li>
+</ul>
+<p>     This yields the trivial solution which certainly does not look like a valid solution for $\vec{s} = $</p>
+<p>     $\begin{pmatrix}a_0 &amp; a_1 &amp; a_2\end{pmatrix}$.</p>
+<h2 id="solving-the-system-over-the-base-field-mathbbf_2">Solving the system over the base field $\mathbb{F}_2$</h2>
+<p>Luckily, all $a_i, r$ and $z$ share a common base field; namely $\mathbb{F}_2$. This is the lowest level we can perform operations. Once we&rsquo;ve solved the system at $\mathbb{F}_2$, we can lift the elements of $\vec{s}$ to $\mathbb{F}_{2^2}$.</p>
+<p>Lift? How? Well, it&rsquo;s pretty simple:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: F4([<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>sage: F4([<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>])
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>sage: F4([<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span>a
+</span></span><span style="display:flex;"><span>sage: F4([<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span>a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>sage: F4([<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>]) <span style="color:#75715e"># = a^2 + a -&gt; too large for F4</span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># &lt;REDACTED&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">ValueError</span>: list <span style="color:#f92672">is</span> too long
+</span></span></code></pre></div><p>$\mathbb{F}_4$ contains only $2^2=4$ elements. Trying to lift $a^2$ directly, results in an error.</p>
+<p>For example, if we end up with:</p>
+<p>$$\vec{s} = \begin{pmatrix}1 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1\end{pmatrix}$$</p>
+<p>we split $\vec{s}$ into three $2$-bit chunks and we get:</p>
+<p>$$a_0 = 1 + 0 \cdot a = 1 \\ a_1 = 0 + 1 \cdot a = a \\ a_2 = 1 + 1 \cdot a = a + 1$$</p>
+<p>By lifting $a_i$ to $Q$ the following polynomial is formed:</p>
+<p>$$p(w) = 1 + a \cdot w + (a+1) \cdot w^2$$</p>
+<p>Programmatically, these lifts can be implemented as:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: s <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>]
+</span></span><span style="display:flex;"><span>sage: Q([F4(s[i:i<span style="color:#f92672">+</span><span style="color:#ae81ff">2</span>]) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, len(s), <span style="color:#ae81ff">2</span>)])
+</span></span><span style="display:flex;"><span>(a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>w<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> a<span style="color:#f92672">*</span>w <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span></code></pre></div><p>What remains now is to construct the matrix $M$ and the target vector $T$. Let&rsquo;s begin with the target vector $T$.</p>
+<h3 id="constructing-the-target-vector-t">Constructing the target vector $T$</h3>
+<p>The equation we want to solve is:</p>
+<p>$$\begin{align}a_0 + a_1r + a_2r^2 = z\end{align}$$</p>
+<p>Our goal is to express $z$ as a binary vector of length $6$ (the degree of the extension field $\mathbb{F}_{2^6}$). Notice above that the binary expansion of $a$, the generator of $\mathbb{F}_{2^2}$, is:</p>
+<p>$$0 + 1 \cdot a$$</p>
+<p>which corresponds to the binary vector $\begin{pmatrix}0 &amp; 1\end{pmatrix}$.</p>
+<p>Similarly, for $z$, the generator of $\mathbb{F}_{2^6}$, the binary vector is:</p>
+<p>$$\begin{pmatrix}0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0\end{pmatrix}$$</p>
+<p>derived from the binary expansion:</p>
+<p>$$z = 0 + 1 \cdot z + 0 \cdot z^2 + 0 \cdot z^3 + 0 \cdot z^4 + 0 \cdot z^5$$</p>
+<p>Fortunately, in SageMath, the vectorization of $z$ can be done in a single line of code.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: vector(z)
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>)
+</span></span></code></pre></div><h3 id="constructing-the-matrix-m">Constructing the matrix $M$</h3>
+<p>What is left is converting the left-hand side into a matrix, after which we can use <code>solve_right</code> to find the solution vector.</p>
+<p>Remember, our goal is to recover $a_i$. To do this, let&rsquo;s express them as elements of $\mathbb{F}_{2^2}$:</p>
+<p>$$
+a_0 = b_0 + b_1 \cdot a\\
+a_1 = b_2 + b_3 \cdot a\\
+a_2 = b_4 + b_5 \cdot a\\
+$$</p>
+<p>where $b_i \in \mathbb{F}_2$. Substituting into $(1)$, we get:</p>
+<p>$$
+(b_0 + b_1 \cdot a) + (b_2 + b_3 \cdot a) \cdot r + (b_4 + b_5 \cdot a) \cdot r^2 = z
+$$</p>
+<p>With some rearrangement, we can express this equation as a vector multiplication. Also, we substitute $z$ with its corresponding binary vector:</p>
+<p>$$
+\begin{pmatrix}b_0 &amp; b_1 &amp; b_2 &amp; b_3 &amp; b_4 &amp; b_5\end{pmatrix}
+\cdot
+\begin{pmatrix}
+1 &amp; a &amp; r &amp; ar &amp; r^2 &amp; ar^2
+\end{pmatrix}
+= \
+\begin{pmatrix}
+0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0
+\end{pmatrix}
+$$</p>
+<p>Now, all elements of:</p>
+<p>$$\begin{pmatrix}1 &amp; a &amp; r &amp; ar &amp; r^2 &amp; ar^2\end{pmatrix}$$</p>
+<p>are elements of $\mathbb{F}_{64}$ which can be converted to binary vectors too.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: vector(F64(<span style="color:#ae81ff">1</span>))
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>sage: vector(F64(a))
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>sage: vector(F64(r))
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>sage: vector(F64(a<span style="color:#f92672">*</span>r))
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>sage: vector(F64(r<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span>))
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>sage: vector(F64(a<span style="color:#f92672">*</span>r<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span>))
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>)
+</span></span></code></pre></div><p>Then, we use each of these as <em><strong>columns</strong></em> to construct $M$:</p>
+<p>$$
+M = \
+\begin{bmatrix}
+1 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 0\\
+0 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1\\
+0 &amp; 1 &amp; 1 &amp; 1 &amp; 0 &amp; 1\\
+0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 0\\
+\end{bmatrix}
+$$</p>
+<p>Finally, we obtain:</p>
+<p>$$
+\begin{bmatrix}
+1 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 0\\
+0 &amp; 1 &amp; 1 &amp; 1 &amp; 1 &amp; 1\\
+0 &amp; 1 &amp; 1 &amp; 1 &amp; 0 &amp; 1\\
+0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; 1 &amp; 0 &amp; 0 &amp; 0\\
+0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 0\\
+\end{bmatrix}
+\cdot
+\begin{pmatrix}b_0 &amp; b_1 &amp; b_2 &amp; b_3 &amp; b_4 &amp; b_5\end{pmatrix}
+= \
+\begin{pmatrix}
+0 &amp; 1 &amp; 0 &amp; 0 &amp; 0 &amp; 0
+\end{pmatrix}
+$$</p>
+<p>which is in the form:</p>
+<p>$$
+M \cdot \vec{s} = T
+$$</p>
+<center><small><i>WARNING! Keep in mind that $M$ might be different due to the non-deterministic nature of <code>any_root</code>.</i></small></center>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: M <span style="color:#f92672">=</span> Matrix(F64<span style="color:#f92672">.</span>base_ring(), [ <span style="color:#75715e"># define M over the base field F_2</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">....</span>:     [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>],
+</span></span><span style="display:flex;"><span><span style="color:#f92672">....</span>:     [<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>],
+</span></span><span style="display:flex;"><span><span style="color:#f92672">....</span>:     [<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>],
+</span></span><span style="display:flex;"><span><span style="color:#f92672">....</span>:     [<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>],
+</span></span><span style="display:flex;"><span><span style="color:#f92672">....</span>:     [<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>],
+</span></span><span style="display:flex;"><span><span style="color:#f92672">....</span>:     [<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span><span style="color:#f92672">....</span>: ])
+</span></span><span style="display:flex;"><span>sage: T <span style="color:#f92672">=</span> vector(z)
+</span></span><span style="display:flex;"><span>sage: s <span style="color:#f92672">=</span> M<span style="color:#f92672">.</span>solve_right(T)
+</span></span><span style="display:flex;"><span>sage: s
+</span></span><span style="display:flex;"><span>(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>sage: Q([F4(s[i:i<span style="color:#f92672">+</span><span style="color:#ae81ff">2</span>]) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, len(s), <span style="color:#ae81ff">2</span>)])
+</span></span><span style="display:flex;"><span>(a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>w<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> a<span style="color:#f92672">*</span>w <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span></code></pre></div><p>Words can&rsquo;t describe the satisfaction of finally seeing everything come together and make perfect sense.</p>
+<p>All we have to do now is define the inverse homomorphism based on the following mapping:</p>
+<p>$$f^{-1}: z \rightarrow (a + 1) \cdot w^2 + a \cdot w + 1$$</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: p <span style="color:#f92672">=</span> Q([F4(s[i:i<span style="color:#f92672">+</span><span style="color:#ae81ff">2</span>]) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, len(s), <span style="color:#ae81ff">2</span>)])
+</span></span><span style="display:flex;"><span>sage: finv <span style="color:#f92672">=</span> F64<span style="color:#f92672">.</span>hom([p,], Q)
+</span></span><span style="display:flex;"><span>sage: finv
+</span></span><span style="display:flex;"><span>Ring morphism:
+</span></span><span style="display:flex;"><span>  From: Finite Field <span style="color:#f92672">in</span> z of size <span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">6</span>
+</span></span><span style="display:flex;"><span>  To:   Univariate Quotient Polynomial Ring <span style="color:#f92672">in</span> w over Finite Field <span style="color:#f92672">in</span> a of size <span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#66d9ef">with</span> modulus y<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">+</span> y <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  Defn: z <span style="color:#f92672">|--&gt;</span> (a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>w<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> a<span style="color:#f92672">*</span>w <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span></code></pre></div><p>For be 100% sure that this is the correct homomorphism, we can generate a few random values $l_0, l_1, &hellip;, l_n \in \mathbb{F}_{64}$ and check whether:</p>
+<p>$$l_i \stackrel{?}{=} f(f^{-1}(l_i))$$</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">100</span>):
+</span></span><span style="display:flex;"><span>    el <span style="color:#f92672">=</span> F64<span style="color:#f92672">.</span>random_element()
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">assert</span> el <span style="color:#f92672">==</span> f(finv(el))
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">&#39;thanks for reading :-]&#39;</span>)
+</span></span></code></pre></div><p>Output:</p>
+<pre tabindex="0"><code>thanks for reading :-]
+</code></pre><p>Hoped you liked this post. Feel free to reach out on discord for feedback, my handle is <code>r4sti</code>.</p>
+<p>You can find the source code for this blog post in my public <a href="https://gist.github.com/rasti37/dd27eae9c66bf7d255fe98f59e9c0e7a" target="_blank" rel="noopener">gist</a>. I have made some modifications to support any field degree.</p>
+<p>Cheers!😎</p>
+
+		</div>
+	</article>
+</main>
+<aside>
+	<div>
+		<div>
+			<h3>RELATED POSTS</h3>
+		</div>
+		<div>
+			<ul>
+				
+			</ul>
+		</div>
+	</div>
+</aside>
+
+
+	<footer>
+	<p>&copy; 2025 :: <a href="http://localhost:1313/"
+			class='header-footer-anchor'><b>rasti&#39;s knowledge cave</b></a> ·
+		
+		<a href="https://github.com/rasti37" class='header-footer-anchor' target='_blank'><b>Github</b></a>
+	</p>
+</footer>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
+  integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"
+  integrity="sha384-Rma6DA2IPUwhNxmrB/7S3Tno0YY7sFu9WSYMCuulLhIqYSGZ2gKCJWIqhBWqMQfh" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js"
+  integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"
+  onload="renderMathInElement(document.body);"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true }, 
+        { left: '$', right: '$', display: false }, 
+        { left: '\\(', right: '\\)', display: false }, 
+        { left: '\\[', right: '\\]', display: true }, 
+      ],
+      throwOnError: false
+    });
+  });
+</script>
+
+</body>
+</html>

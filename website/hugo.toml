@@ -41,3 +41,12 @@ tableOfContents = true
         name = "Github"
         url = "https://github.com/rasti37"
         weight = 1
+
+[related]
+  includeNewer = true
+  threshold = 70
+  toLower = false
+  [[related.indices]]
+    name = 'fragmentrefs'
+    type = 'fragments'
+    weight = 20

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<link rel="icon" type="image/x-icon" href="/thumb.png">
+	<style type=text/css>body{font-family:monospace;}</style>
+	<title>(Crypto) TSJ CTF 2022 - babyRSA</title>
+	
+	
+	<link rel="stylesheet" href="/css/style.css">
+	
+	
+</head>
+<body>
+	<header>
+	::::::::::::::::::::::::::::<br>
+	:: <a href="http://localhost:1313/" class='header-footer-anchor'>rasti&#39;s knowledge cave</a> ::<br>
+	::::::::::::::::::::::::::::
+	<div style="float: right;">nothing fancy yet</div><br>
+	<p>
+	<nav>
+		<a href="/" class='header-footer-anchor'><b>Start</b></a> ·
+		
+		
+		
+		<a href="/posts/" class='header-footer-anchor'><b>Posts</b></a> · 
+		
+		<a href="/categories/" class='header-footer-anchor'><b>Categories</b></a> · 
+		
+		<a href="/tags/" class='header-footer-anchor'><b>Tags</b></a>
+		
+	</nav>
+	</p>
+	
+</header>
+	
+<main>
+	<article>
+		<h1>(Crypto) TSJ CTF 2022 - babyRSA</h1>
+		<small>Created at: 06/03/2025, 23:26:11</small><br>
+		<small>Last Updated at: 06/03/2025</small>
+		<br><br>.:
+		
+		
+		<a href="/tags/ctf-writeups" class='header-footer-anchor'>#ctf-writeups</a>, 
+		
+		<a href="/tags/crypto" class='header-footer-anchor'>#crypto</a>
+		:.
+		<div>
+			<div style='cursor: pointer; border-radius: 3px; border:1px solid #888; padding: 7px; margin: 1.3em 0 1.3em 0;'>
+    <details>
+        <summary>Table of Contents</summary>
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#description">Description</a></li>
+    <li><a href="#synopsis">Synopsis</a></li>
+    <li><a href="#source-files">Source files</a></li>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#idea-on-how-to-recover-the-base-point-and-the-problem-that-lies">Idea on how to recover the base point and the problem that lies</a></li>
+    <li><a href="#solution">Solution</a>
+      <ul>
+        <li><a href="#q-is-half-the-bit-length-of-p">q is half the bit length of p</a></li>
+        <li><a href="#playing-with-the-curves-formula">Playing with the curve&rsquo;s formula</a></li>
+        <li><a href="#constructing-the-polynomials">Constructing the polynomials</a></li>
+        <li><a href="#coppersmiths-algortihm">Coppersmith&rsquo;s algortihm</a></li>
+        <li><a href="#factoring-n">Factoring $N$</a></li>
+      </ul>
+    </li>
+    <li><a href="#full-solve-script">Full solve script</a></li>
+  </ul>
+</nav>
+    </details>
+</div>
+<html>
+<style>
+    table, td, th {  
+        border: 1px solid #ddd;
+        text-align: center;
+    }
+    table {
+        border-collapse: collapse;
+        margin: 0 auto;
+    }
+    th, td {
+        padding: 7px;
+    }
+</style>
+    <table>
+      <tbody>
+        <tr>
+          <td><b>Category</b></td>
+          <td>Crypto</td>
+        </tr>
+        <tr>
+          <td><b>Difficulty</b></td>
+          <td style="color: orange">Medium</td>
+        </tr>
+        <tr>
+          <td><b>CTF</b></td>
+          <td><a href="https://ctftime.org/event/1547/" target="_blank" class='header-footer-anchor'>TSJ CTF</a></td>
+        </tr>
+        <tr>
+          <td><b>Year</b></td>
+          <td>2022</td>
+        </tr>
+        <tr>
+          <td><b>Challenge Author</b></td>
+          <td><code>maple3142</code></td>
+        </tr>
+      </tbody>
+    </table>
+</html>
+<h1 id="description">Description</h1>
+<p>
+<figure>
+  <img src="meme.png" alt="" />
+</figure>
+
+
+</p>
+<h1 id="synopsis">Synopsis</h1>
+<p>The point $C$ belongs to the curve so we create two multivariate polynomials, eliminate one variable using resultants and run <code>small_roots()</code> to obtain $q$. Having factored $N$, construct the curve in the composite ring $\mathbb{Z}/n\mathbb{Z}$ and find the base point by calculating $C$ with the inverse of $e$ modulo the curve&rsquo;s order.</p>
+<h1 id="source-files">Source files</h1>
+<p>You can download the source files from the original CTF <a href="https://github.com/XxTSJxX/TSJ-CTF-2022/blob/main/Crypto/babyRSA/chall.tar.gz" target="_blank" rel="noopener">repository</a>.</p>
+<h1 id="overview">Overview</h1>
+<p>Let&rsquo;s first analyze the main script of the challenge; that is <code>challenge.sage</code>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Util.number <span style="color:#f92672">import</span> <span style="color:#f92672">*</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">import</span> os
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>proof<span style="color:#f92672">.</span>arithmetic(<span style="color:#66d9ef">False</span>)  <span style="color:#75715e"># to make sage faster</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>flag <span style="color:#f92672">=</span> <span style="color:#e6db74">b</span><span style="color:#e6db74">&#34;TSJ</span><span style="color:#e6db74">{not_real_flag}</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>p <span style="color:#f92672">=</span> getPrime(<span style="color:#ae81ff">1024</span>)
+</span></span><span style="display:flex;"><span>q <span style="color:#f92672">=</span> getPrime(<span style="color:#ae81ff">512</span>)
+</span></span><span style="display:flex;"><span>n <span style="color:#f92672">=</span> p <span style="color:#f92672">*</span> q
+</span></span><span style="display:flex;"><span>e <span style="color:#f92672">=</span> <span style="color:#ae81ff">65537</span>
+</span></span><span style="display:flex;"><span>E <span style="color:#f92672">=</span> EllipticCurve(Zmod(n), [p, q])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">while</span> <span style="color:#66d9ef">True</span>:
+</span></span><span style="display:flex;"><span>    x <span style="color:#f92672">=</span> ZZ(bytes_to_long(flag <span style="color:#f92672">+</span> os<span style="color:#f92672">.</span>urandom(<span style="color:#ae81ff">192</span> <span style="color:#f92672">-</span> len(flag))))
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">try</span>:
+</span></span><span style="display:flex;"><span>        yp <span style="color:#f92672">=</span> ZZ(E<span style="color:#f92672">.</span>change_ring(GF(p))<span style="color:#f92672">.</span>lift_x(x)<span style="color:#f92672">.</span>xy()[<span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span>        yq <span style="color:#f92672">=</span> ZZ(E<span style="color:#f92672">.</span>change_ring(GF(q))<span style="color:#f92672">.</span>lift_x(x)<span style="color:#f92672">.</span>xy()[<span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span>        y <span style="color:#f92672">=</span> crt([yp, yq], [p, q])
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">break</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">except</span>:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">pass</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>C <span style="color:#f92672">=</span> e <span style="color:#f92672">*</span> E(x, y)
+</span></span><span style="display:flex;"><span>print(n)
+</span></span><span style="display:flex;"><span>print(C<span style="color:#f92672">.</span>xy())
+</span></span></code></pre></div><p>At first glance, we see there is a standard RSA key generation, i.e. the secret primes $p, q$, the modulo $N = p*q$ and the public exponent $e = 65537$. Then, an elliptic curve $\mathbb{E}$ is defined over the composite ring $\mathbb{Z}/n\mathbb{Z}$ with parameters $a = p$ and $b = q$.</p>
+<p>We can describe this curve with the following algebraic relationship:</p>
+<p>$$
+y^2 \equiv x^3 + px + q \pmod N
+$$</p>
+<p>The flag is randomly padded and stored in the variable $x$. After that, two points with the $x$-coordinate are calculated:</p>
+<ul>
+<li>
+<p>$(x,\ y_p)$</p>
+<p>This is a point of the curve that is defined over $GF(p)$; say $\mathbb{E}_p$.</p>
+<p>$$y_p^2 \equiv x^3 + q \pmod {p}$$</p>
+<p>Note that $px$ is a multiple of $p$ so it is eliminated $\pmod p$.</p>
+</li>
+<li>
+<p>$(x,\ y_q)$</p>
+<p>This is a point of the curve that is defined over $GF(q)$; say $\mathbb{E}_q$.</p>
+<p>$$y_q^2 \equiv x^3 + px \pmod {q}$$</p>
+<p>Note that $q$ is eliminated $\pmod q$.</p>
+</li>
+</ul>
+<p><em>What the function <code>E.change_ring()</code> basically does is changing the ring in which the curve</em> $\mathbb{E}$ <em>is defined</em>.</p>
+<p>Then, $y_p$ and $y_q$ are combined with the Chinese Remainder Theorem to get the $y$-coordinate that belongs to $\mathbb{E_n}$.</p>
+<p>To summarize, this loop does the same job as the Sage method <code>E.lift_x(x)</code>. The reason we can&rsquo;t use this method now is due to $\mathbb{E}_n$ being defined over a composite ring and <code>lift_x</code> would try to factor $N$ to lift the point in $\mathbb{E}_p$ and $\mathbb{E}_q$, which is a very hard problem since the prime generation is secure. Therefore we conclude that the flag is randomly padded until the point $(x,\ y)$ is on $\mathbb{E}_n$, where $x$ is the padded flag.</p>
+<p>Finally, the encryption is similar to that of RSA but in the additive group:</p>
+<ul>
+<li>$C$ is the ciphertext point</li>
+<li>$e$ is the scalar</li>
+<li>$G = E(x,y)$ is the point of $\mathbb{E}_n$ that we want to retrieve</li>
+</ul>
+<h1 id="idea-on-how-to-recover-the-base-point-and-the-problem-that-lies">Idea on how to recover the base point and the problem that lies</h1>
+<p>How does decryption work in RSA?
+One raises the ciphertext to the multiplicative inverse of $e$ modulo the order of the multiplicative group $\mathbb{Z}/n\mathbb{Z}$; that is $\phi(n)$.</p>
+<p>Similarly, from <a href="https://crypto.stackexchange.com/questions/86663/how-to-find-the-base-point-given-public-and-private-key-and-ec-parameters-except/86670#86670" target="_blank" rel="noopener">here</a>, we know that to solve for $G$ we need to multiply $C$ by the multiplicative inverse of $e$ modulo the order of $\mathbb{E}_n$.</p>
+<p>$$
+\begin{aligned}
+G \equiv Ce^{-1} \pmod {O_n}\quad\quad\quad\quad(1)
+\end{aligned}
+$$</p>
+<p>where $O_n$ is the order of the curve $\mathbb{E}_n$.</p>
+<p>Pretty straightforward right? &hellip; Hmm, not at all.</p>
+<p>As aforementioned, $\mathbb{E}_n$ is defined over a composite ring so knowing its order is as hard as factoring $N$. $N$ is more than 1500 bits long so without a quantum computer, we have no luck here.</p>
+<h1 id="solution">Solution</h1>
+<h2 id="q-is-half-the-bit-length-of-p">q is half the bit length of p</h2>
+<p>The key to factor $N$ is notice that $q$ is half the bit length of $p$. That&rsquo;s about $\frac{1}{3}$ the bit length of $N$.</p>
+<p>$\dfrac{1}{3}$? Where did this come from?</p>
+<p>That&rsquo;s because $N$ can be written as the product of three <code>512</code>-bit integers, say $a,b,c$.</p>
+<p>$$N = a \cdot b \cdot c$$</p>
+<p>Since $q$ is 512 bits, we are certain that one (1) of these three (3) variables must be $q$. This makes $q$ about $\frac{1}{3}$ of $N$.</p>
+<h2 id="playing-with-the-curves-formula">Playing with the curve&rsquo;s formula</h2>
+<p>Since $G$ belongs to $\mathbb{E}_n$, so does $C$.</p>
+<p>We know that any point $(x,\ y)$ of $\mathbb{E}_n$ satisfies the following formula:</p>
+<p>$$y^2 \equiv x^3 + px + q \pmod N$$</p>
+<p>Then substituting with $C = (C_x, C_y)$ coordinates we get:</p>
+<p>$$C_y^2 \equiv C_x^3 + p \cdot C_x + q \pmod N$$</p>
+<p>Let&rsquo;s rewrite the relation above as follows:</p>
+<p>$$C_y^2 - C_x^3 - p \cdot C_x - q \equiv 0 \pmod N$$</p>
+<p>We know everything apart from $p$ and $q$ but we can&rsquo;t solve for them because we have one relation and two unknowns. Do we know something else about $p,q$? Well, from the RSA part we know that $N = p \cdot q$ and $N$ is known. That&rsquo;s great! Two equations and two unknowns so there is a unique solution.</p>
+<h2 id="constructing-the-polynomials">Constructing the polynomials</h2>
+<p>Let&rsquo;s define the following polynomials over $\mathbb{Z}/n\mathbb{Z}$.</p>
+<p>$$
+\begin{aligned}
+f(x,\ y) &amp;= n - x \cdot y\\
+g(x,\ y) &amp;= C_y^2 - C_x^3 - x \cdot C_x - y
+\end{aligned}
+$$</p>
+<p>Notice that $p, q$ are both roots of these polynomials:</p>
+<p>$$
+\begin{aligned}
+f(p,\ q) &amp;= n - p \cdot q = 0\\
+g(p,\ q) &amp;= C_y^2 - C_x^3 - p \cdot C_x - q = 0
+\end{aligned}
+$$</p>
+<p>They are multivariate polynomials but maybe we could eliminate one variable? For example, we could substitute $p = \dfrac{N}{q}$ in the $g$ polynomial. One could substitute with pencil and paper and come up with a univariate polynomial in terms of $q$ but that&rsquo;s a lot of work (<em>however, it is recommended as an exercise for beginners!</em>).</p>
+<p>We could use our beloved resultant that basically does the same thing. You can find more about resultants from <a href="https://www.imo.universite-paris-saclay.fr/~meliot/algebra/resultant.pdf" target="_blank" rel="noopener">1</a>, <a href="http://buzzard.ups.edu/courses/2016spring/projects/woody-resultants-ups-434-2016.pdf" target="_blank" rel="noopener">2</a> and some cool Joseph <a href="https://jsur.in/posts/2021-10-03-tsg-ctf-2021-crypto-writeups" target="_blank" rel="noopener">writeups</a>.</p>
+<p>Let&rsquo;s use Sage to find the resultant of these polynomials. We will basically find a univariate polynomial in terms of $q$ only.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-py" data-lang="py"><span style="display:flex;"><span>P<span style="color:#f92672">.&lt;</span>x,y<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> PolynomialRing(Zmod(n))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>f <span style="color:#f92672">=</span> n <span style="color:#f92672">-</span> x<span style="color:#f92672">*</span>y
+</span></span><span style="display:flex;"><span>g <span style="color:#f92672">=</span> Cy<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">-</span> Cx<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">-</span> x<span style="color:#f92672">*</span>Cx <span style="color:#f92672">-</span> y
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">resultant</span>(f1, f2, var):
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> Matrix<span style="color:#f92672">.</span>determinant(f1<span style="color:#f92672">.</span>sylvester_matrix(f2, var))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>h <span style="color:#f92672">=</span> resultant(f, g, x)  <span style="color:#75715e"># eliminating x is equivalent to eliminating p</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(h)
+</span></span></code></pre></div><p>The output is:</p>
+<pre tabindex="0"><code>y^2 + 11913771694063495132568425582147978387779218009404951491138444355803251420750777828581495229803905485508710200822306270492779460893035511452060758726696972877404214806553422280705330092204004616281420566339823476408647786409010040145494297930530259483781466478416269629186356995544407404915722209121439224567698019474188565402069644492370517495662654444038623713130993722823437453577026376201959720791194856979494885237541302217843842247547112767879217639883793*y
+</code></pre><p>We have the polynomial:</p>
+<p>$$
+h(y) \equiv y^2 + Ay \pmod N
+$$</p>
+<p>where $A$ is the large integer.</p>
+<p>For the correct value of $q$ it holds that:</p>
+<p>$$
+h(q) \equiv 0 \pmod N
+$$</p>
+<p>But what can we do now? This polynomial is defined in $\mathbb{Z}/n\mathbb{Z}$ so we can&rsquo;t apply standard techniques that work in the integers $\mathbb{Z}$.</p>
+<p>Recall that $q$ is half $p$&rsquo;s bit length. This means that $q$ is a <em>small root</em> of this polynomial, compared to the size of $N$. It turns out we can use Coppersmith&rsquo;s algorithm to find the roots of the polynomial above. These roots are also known as <code>small roots</code>.</p>
+<h2 id="coppersmiths-algortihm">Coppersmith&rsquo;s algortihm</h2>
+<p>It might be a bit complex to describe how the algorithm works but the intuition behind is that when we are looking for something <em>small</em> defined over something <em>big</em>, then Coppersmith&rsquo;s algorithm should do the trick.</p>
+<p>This is why we cared about $q$ being the half $p$&rsquo;s bit length.</p>
+<p>Let&rsquo;s get <em>a bit</em> more technical now. Coppersmith&rsquo;s method will return the small roots of our polynomial modulo a factor of $N$, say $p$, without having to factor $N$ at all. Pretty instance, right? That&rsquo;s lattices for you!</p>
+<p>Why is this so important?</p>
+<p>While the equations are defined modulo $N$, Coppersmith&rsquo;s small roots algorithm finds a small root modulo <em>a factor of</em> $N$ and in our case <em>modulo</em> $p$.</p>
+<p>Sage&rsquo;s <code>small_roots()</code> function is an implementation of Coppersmith&rsquo;s algorithm. However, it requires some parameters:</p>
+<ul>
+<li>
+<p>$X$</p>
+<p>That&rsquo;s an upper bound for the small root we are looking for. In our case, $q$ is at most $2^{512}$ so $X = 2^{512}$.</p>
+</li>
+<li>
+<p><code>beta</code> (or $\beta$)</p>
+<p>That&rsquo;s a value such that $p \geq N^\beta$, where $p$ is a factor of $N$. We know that $p \approx n^{\frac{2}{3}}$ or equivalently $p \geq n^{\frac{2}{3}}$ so:</p>
+<p>$$\beta = \dfrac{2}{3} = 0.666\dots$$</p>
+</li>
+</ul>
+<p>You can check <a href="https://doc.sagemath.org/html/en/reference/polynomial_rings/sage/rings/polynomial/polynomial_modn_dense_ntl.html#sage.rings.polynomial.polynomial_modn_dense_ntl.small_roots" target="_blank" rel="noopener">here</a> for more information.</p>
+<h2 id="factoring-n">Factoring $N$</h2>
+<p>Now it&rsquo;s time to factor $N$. Let&rsquo;s run the following code:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-py" data-lang="py"><span style="display:flex;"><span>roots <span style="color:#f92672">=</span> h<span style="color:#f92672">.</span>small_roots(X<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">512</span>, beta<span style="color:#f92672">=</span><span style="color:#ae81ff">0.66</span>)
+</span></span><span style="display:flex;"><span>print(roots)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-py" data-lang="py"><span style="display:flex;"><span>[<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">7560550953987228717927043411195097606178780260722416435854220484370855427179572047127883844297336386784419855728350626032040641635456814848906770345908561</span>]
+</span></span></code></pre></div><p>The second root looks like a candidate for $q$.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-py" data-lang="py"><span style="display:flex;"><span>print(N <span style="color:#f92672">%</span> q <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-py" data-lang="py"><span style="display:flex;"><span><span style="color:#66d9ef">True</span>
+</span></span></code></pre></div><p>Boom! We have factored $N$.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-py" data-lang="py"><span style="display:flex;"><span>q <span style="color:#f92672">=</span> int(h<span style="color:#f92672">.</span>small_roots(X<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">512</span>, beta<span style="color:#f92672">=</span><span style="color:#ae81ff">0.66</span>)[<span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span>p <span style="color:#f92672">=</span> N <span style="color:#f92672">//</span> q
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">assert</span> N <span style="color:#f92672">==</span> p <span style="color:#f92672">*</span> q
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;p = </span><span style="color:#e6db74">{</span>p<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
+</span></span><span style="display:flex;"><span>print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#39;q = </span><span style="color:#e6db74">{</span>q<span style="color:#e6db74">}</span><span style="color:#e6db74">&#39;</span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-py" data-lang="py"><span style="display:flex;"><span>p <span style="color:#f92672">=</span> <span style="color:#ae81ff">143466851392554970695990704123817779733897135669358867616227016983904822448652872447294618655211767603232776070689066195417250663712048624942911364907905504389182987025672966027320571640054927174423881068214579019052804849273855736938414398455136976371108924577231955088915205951155616111863602559370112932349</span>
+</span></span><span style="display:flex;"><span>q <span style="color:#f92672">=</span> <span style="color:#ae81ff">7560550953987228717927043411195097606178780260722416435854220484370855427179572047127883844297336386784419855728350626032040641635456814848906770345908561</span>
+</span></span></code></pre></div><p>Now we have to find $O_n$. Since $\mathbb{E}_n$ is defined over a composite ring, it holds that:</p>
+<p>$$
+O_n = O_p \cdot O_q
+$$</p>
+<p>where $O_p$ the order of the curve $\mathbb{E}_p$ and $O_q$ the order of the curve $\mathbb{E}_q$.</p>
+<p>Knowning $O_n$, we can compute $G$ as shown in $(1)$.</p>
+<h1 id="full-solve-script">Full solve script</h1>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-py" data-lang="py"><span style="display:flex;"><span><span style="color:#f92672">from</span> sage.matrix.matrix2 <span style="color:#f92672">import</span> Matrix
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Util.number <span style="color:#f92672">import</span> long_to_bytes
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">resultant</span>(f1, f2, var):
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> Matrix<span style="color:#f92672">.</span>determinant(f1<span style="color:#f92672">.</span>sylvester_matrix(f2, var))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Cx <span style="color:#f92672">=</span> <span style="color:#ae81ff">1079311510414830031139310538989364057627185699077021276018232243092942690870213059161389825534830969580365943449482350229248945906866520819967957236255440270989833744079711900768144840591483525815244585394421988274792758875782239418100536145352175259508289748680619234207733291893262219468921233103016818320457126934347062355978211746913204921678806713434052571635091703300179193823668800062505275903102987517403501907477305095029634601150501028521316347448735695</span>
+</span></span><span style="display:flex;"><span>Cy <span style="color:#f92672">=</span> <span style="color:#ae81ff">950119069222078086234887613499964523979451201727533569872219684563725731563439980545934017421736344519710579407356386725248959120187745206708940002584577645674737496282710258024067317510208074379116954056479277393224317887065763453906737739693144134777069382325155341867799398498938089764441925428778931400322389280512595265528512337796182736811112959040864126090875929813217718688941914085732678521954674134000433727451972397192521253852342394169735042490836886</span>
+</span></span><span style="display:flex;"><span>N <span style="color:#f92672">=</span> <span style="color:#ae81ff">1084688440161525456565761297723021343753253859795834242323030221791996428064155741632924019882056914573754134213933081812831553364457966850480783858044755351020146309359045120079375683828540222710035876926280456195986410270835982861232693029200103036191096111928833090012465092747472907628385292492824489792241681880212163064150211815610372913101079146216940331740232522884290993565482822803814551730856710106385508489039042473394392081462669609250933566332939789</span>
+</span></span><span style="display:flex;"><span>e <span style="color:#f92672">=</span> <span style="color:#ae81ff">65537</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>P<span style="color:#f92672">.&lt;</span>p,q<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> PolynomialRing(Zmod(N))
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>f <span style="color:#f92672">=</span> N <span style="color:#f92672">-</span> p<span style="color:#f92672">*</span>q
+</span></span><span style="display:flex;"><span>g <span style="color:#f92672">=</span> Cy<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">-</span> Cx<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">-</span> p<span style="color:#f92672">*</span>Cx <span style="color:#f92672">-</span> q
+</span></span><span style="display:flex;"><span>h <span style="color:#f92672">=</span> resultant(f, g, p)<span style="color:#f92672">.</span>univariate_polynomial()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>q <span style="color:#f92672">=</span> int(h<span style="color:#f92672">.</span>small_roots(X<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">512</span>, beta<span style="color:#f92672">=</span><span style="color:#ae81ff">0.66</span>)[<span style="color:#ae81ff">1</span>])
+</span></span><span style="display:flex;"><span>p <span style="color:#f92672">=</span> N <span style="color:#f92672">//</span> q
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">assert</span> N <span style="color:#f92672">==</span> p <span style="color:#f92672">*</span> q
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>E <span style="color:#f92672">=</span> EllipticCurve(Zmod(N), [p,q])
+</span></span><span style="display:flex;"><span>Ep <span style="color:#f92672">=</span> EllipticCurve(GF(p), [p,q])
+</span></span><span style="display:flex;"><span>Eq <span style="color:#f92672">=</span> EllipticCurve(GF(q), [p,q])
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>On <span style="color:#f92672">=</span> Ep<span style="color:#f92672">.</span>order() <span style="color:#f92672">*</span> Eq<span style="color:#f92672">.</span>order()
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>C <span style="color:#f92672">=</span> E(Cx, Cy)
+</span></span><span style="display:flex;"><span>G <span style="color:#f92672">=</span> int(pow(e, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, On)) <span style="color:#f92672">*</span> C
+</span></span><span style="display:flex;"><span>flag <span style="color:#f92672">=</span> long_to_bytes(int(G[<span style="color:#ae81ff">0</span>]))
+</span></span><span style="display:flex;"><span>flag <span style="color:#f92672">=</span> re<span style="color:#f92672">.</span>search(<span style="color:#e6db74">rb</span><span style="color:#e6db74">&#39;(TSJ{.*})&#39;</span>, flag)<span style="color:#f92672">.</span>group(<span style="color:#ae81ff">1</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>print(flag)
+</span></span></code></pre></div><p>Output:</p>
+<pre tabindex="0"><code>b&#34;TSJ{i_don&#39;t_know_how_to_come_up_with_a_good_flag_sorry}&#34;
+</code></pre>
+		</div>
+	</article>
+</main>
+<aside>
+	<div>
+		<div>
+			<h3>RELATED POSTS</h3>
+		</div>
+		<div>
+			<ul>
+				
+				<li>2025-03-02 :: <a href="/posts/2025-03-02-litctf-2023-lcg-squared/">(Crypto) LITCTF 2023 - LCG... Squared?</a></li>
+				
+				<li>2025-03-01 :: <a href="/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/">(Crypto) Backdoor CTF 2024 - Hashing Frenzy</a></li>
+				
+			</ul>
+		</div>
+	</div>
+</aside>
+
+
+	<footer>
+	<p>&copy; 2025 :: <a href="http://localhost:1313/"
+			class='header-footer-anchor'><b>rasti&#39;s knowledge cave</b></a> ·
+		
+		<a href="https://github.com/rasti37" class='header-footer-anchor' target='_blank'><b>Github</b></a>
+	</p>
+</footer>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
+  integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"
+  integrity="sha384-Rma6DA2IPUwhNxmrB/7S3Tno0YY7sFu9WSYMCuulLhIqYSGZ2gKCJWIqhBWqMQfh" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js"
+  integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"
+  onload="renderMathInElement(document.body);"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true }, 
+        { left: '$', right: '$', display: false }, 
+        { left: '\\(', right: '\\)', display: false }, 
+        { left: '\\[', right: '\\]', display: true }, 
+      ],
+      throwOnError: false
+    });
+  });
+</script>
+
+</body>
+</html>

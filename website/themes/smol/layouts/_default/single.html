@@ -2,11 +2,13 @@
 <main>
 	<article>
 		<h1>{{ .Title }}</h1>
-		<b><time>{{ .Date.Format (default "2006-01-02, 15:04:05" .Site.Params.dateFmt) }}</time></b> :: 
+		<small>Created at: {{ .Date.Format (default "02/01/2006, 15:04:05" .Site.Params.dateFmt) }}</small><br>
+		<small>Last Updated at: {{ .Lastmod | time.Format "02/01/2006" }}</small>
+		<br><br>.:
 		{{ $l := sub (len .Params.tags) 1 }}
 		{{ range $index, $tags := .Params.tags }}
 		<a href="{{ "tags/" | relLangURL }}{{ . | urlize }}" class='header-footer-anchor'>#{{ . }}</a>{{ if ne $index $l }}, {{ end }}
-		{{ end }}
+		{{ end }}:.
 		<div>
 			{{ .Content }}
 		</div>
