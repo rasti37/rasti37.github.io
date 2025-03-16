@@ -161,7 +161,7 @@
 </span></span><span style="display:flex;"><span>Ring morphism:
 </span></span><span style="display:flex;"><span>  From: Univariate Quotient Polynomial Ring <span style="color:#f92672">in</span> z over Finite Field <span style="color:#f92672">in</span> a of size <span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#66d9ef">with</span> modulus y<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">+</span> y <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
 </span></span><span style="display:flex;"><span>  To:   Finite Field <span style="color:#f92672">in</span> w of size <span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">6</span>
-</span></span><span style="display:flex;"><span>  Defn: w <span style="color:#f92672">|--&gt;</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>  Defn: w <span style="color:#f92672">|--&gt;</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> z <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
 </span></span></code></pre></div><ol>
 <li>
 <p>What the heck if <code>splitting_field</code>? I don&rsquo;t really know in detail but think of it as an extension field that $P$ is raised to. We will treat it as equivalent to $\mathbb{F}_{64}$.</p>
@@ -194,7 +194,9 @@ $$</p>
 </span></span><span style="display:flex;"><span>z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span>
 </span></span><span style="display:flex;"><span>sage: f <span style="color:#f92672">=</span> Q<span style="color:#f92672">.</span>hom([z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span><span style="color:#f92672">+</span>z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span><span style="color:#f92672">+</span>z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span><span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>], codomain<span style="color:#f92672">=</span>F64) ; f(w<span style="color:#f92672">^</span><span style="color:#ae81ff">6</span>)
 </span></span><span style="display:flex;"><span>z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> z
-</span></span></code></pre></div><h1 id="problem-demonstration">Problem demonstration</h1>
+</span></span></code></pre></div><p>To avoid inaccuracy in this blog post due to non-determinism, we will fix:</p>
+<p>$$r = z^4 + z^2 + z + 1$$</p>
+<h1 id="problem-demonstration">Problem demonstration</h1>
 <p>So far, so good. We found a way to map elements from $Q \rightarrow \mathbb{F}_{64}$ using $f$. What if we want to go in the opposite direction? In other words, given the image $f(w^6) = z^4 + z^2 + z$, can we determine $w^6 = f^{-1}(z^4 + z^2 + z)$?</p>
 <p>This boils down to constructing the inverse ring homomorphism $f^{-1}$:</p>
 <p>$$f^{-1}: \mathbb{F}_{64} \rightarrow Q$$</p>
@@ -249,9 +251,9 @@ $$</p>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> p<span style="color:#f92672">.</span>lift()(r) <span style="color:#f92672">==</span> z:
 </span></span><span style="display:flex;"><span>        print(p)
 </span></span></code></pre></div><p>Output:</p>
-<pre tabindex="0"><code>a*w^2 + w + 1
-</code></pre><p>Bingo! The vector $\vec{s} = \{1, 1, a\}$ is the coefficient vector we are looking for. This will serve as our sanity check when verifying the solution&rsquo;s correctness.</p>
-<p style='text-align: center'><small><i>Since <code>any_root</code> is non-deterministic, the polynomial $p$ might vary but the core idea remains unchanged.</i></small></p>
+<pre tabindex="0"><code>(a + 1)*w^2 + a*w + 1
+</code></pre><p>Bingo! The vector $\vec{s} = \{1, 1, a+1\}$ is the coefficient vector we are looking for. This will serve as our sanity check when verifying the solution&rsquo;s correctness.</p>
+<p style='text-align: center'><small><i>With <code>any_root</code>, the polynomial $p$ might vary but the core idea remains unchanged.</i></small></p>
 <p>Now, back to the math&hellip;</p>
 <h2 id="yes-linear-algebra--again">Yes. Linear algebra &hellip; again</h2>
 <p>The only relation we know is:</p>
@@ -305,15 +307,15 @@ $$</p>
 </span></span><span style="display:flex;"><span><span style="color:#a6e22e">ValueError</span>: list <span style="color:#f92672">is</span> too long
 </span></span></code></pre></div><p>$\mathbb{F}_4$ contains only $2^2=4$ elements. Trying to lift $a^2$ directly, results in an error.</p>
 <p>For example, if we end up with:</p>
-<p>$$\vec{s} = \begin{pmatrix}1 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1\end{pmatrix}$$</p>
+<p>$$\vec{s} = \begin{pmatrix}1 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 1\end{pmatrix}$$</p>
 <p>we split $\vec{s}$ into three $2$-bit chunks and we get:</p>
-<p>$$a_0 = 1 + 0 \cdot a = 1 \\ a_1 = 0 + 1 \cdot a = a \\ a_2 = 1 + 1 \cdot a = a + 1$$</p>
+<p>$$a_0 = 1 + 0 \cdot a = 1 \\ a_1 = 1 + 1 \cdot a = a + 1 \\ a_2 = 0 + 1 \cdot a = a$$</p>
 <p>By lifting $a_i$ to $Q$ the following polynomial is formed:</p>
-<p>$$p(w) = 1 + a \cdot w + (a+1) \cdot w^2$$</p>
+<p>$$p(w) = 1 + (a+1) \cdot w + a \cdot w^2$$</p>
 <p>Programmatically, these lifts can be implemented as:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: s <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>]
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: s <span style="color:#f92672">=</span> [<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>]
 </span></span><span style="display:flex;"><span>sage: Q([F4(s[i:i<span style="color:#f92672">+</span><span style="color:#ae81ff">2</span>]) <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, len(s), <span style="color:#ae81ff">2</span>)])
-</span></span><span style="display:flex;"><span>(a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>w<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> a<span style="color:#f92672">*</span>w <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>a<span style="color:#f92672">*</span>w<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> (a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>w <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
 </span></span></code></pre></div><p>What remains now is to construct the matrix $M$ and the target vector $T$. Let&rsquo;s begin with the target vector $T$.</p>
 <h3 id="constructing-the-target-vector-t">Constructing the target vector $T$</h3>
 <p>The equation we want to solve is:</p>
@@ -400,7 +402,7 @@ $$</p>
 <p>$$
 M \cdot \vec{s} = T
 $$</p>
-<center><small><i>WARNING! Keep in mind that $M$ might be different due to the non-deterministic nature of <code>any_root</code>.</i></small></center>
+<center><small><i>WARNING! You might get a different matrix $M$ if you use <code>any_root</code>.</i></small></center>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: M <span style="color:#f92672">=</span> Matrix(F64<span style="color:#f92672">.</span>base_ring(), [ <span style="color:#75715e"># define M over the base field F_2</span>
 </span></span><span style="display:flex;"><span><span style="color:#f92672">....</span>:     [<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">0</span>],
 </span></span><span style="display:flex;"><span><span style="color:#f92672">....</span>:     [<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">1</span>],
@@ -425,7 +427,7 @@ $$</p>
 </span></span><span style="display:flex;"><span>  From: Finite Field <span style="color:#f92672">in</span> z of size <span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">6</span>
 </span></span><span style="display:flex;"><span>  To:   Univariate Quotient Polynomial Ring <span style="color:#f92672">in</span> w over Finite Field <span style="color:#f92672">in</span> a of size <span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#66d9ef">with</span> modulus y<span style="color:#f92672">^</span><span style="color:#ae81ff">3</span> <span style="color:#f92672">+</span> y <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
 </span></span><span style="display:flex;"><span>  Defn: z <span style="color:#f92672">|--&gt;</span> (a <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)<span style="color:#f92672">*</span>w<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> a<span style="color:#f92672">*</span>w <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>
-</span></span></code></pre></div><p>For be 100% sure that this is the correct homomorphism, we can generate a few random values $l_0, l_1, &hellip;, l_n \in \mathbb{F}_{64}$ and check whether:</p>
+</span></span></code></pre></div><p>To be 100% sure that this is the correct homomorphism, we can generate a few random values $l_0, l_1, &hellip;, l_n \in \mathbb{F}_{64}$ and check whether:</p>
 <p>$$l_i \stackrel{?}{=} f(f^{-1}(l_i))$$</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">100</span>):
 </span></span><span style="display:flex;"><span>    el <span style="color:#f92672">=</span> F64<span style="color:#f92672">.</span>random_element()

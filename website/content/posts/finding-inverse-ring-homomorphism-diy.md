@@ -55,8 +55,6 @@ In natural language:
 
 > $A$ is the set of degree-$2$ polynomials in $y$ with coefficients in $\mathbb{F}_{2^2}$. But hey, when you do operations with these polynomials, reduce the result modulo the irreducible polynomial $y^3+y+1$.
 
-<!-- Notice that the degree of the polynomials in $A$ should be less than $3$; the degree of the irreducible polynomial. Last but not least, the field $\mathbb{F}_{2^2}$ contains 4 elements which are ***at most*** degree-$1$ polynomials with coefficients in $\mathbb{F}_2$; namely: $\\{0, 1, a, a+1\\}$. -->
-
 It's time for converting the nitty-gritty maths into code.
 
 ## Defining the parameters in Sage
@@ -119,8 +117,6 @@ sage: str(list(F64))
 
 It turns out that there exists a homomorphism (from the Greek «ὅμοιος» + «μορφή», "similar form") that connects the elements of $Q$ and $F_{64}$. In fact, both fields share the same cardinality ($64$ elements) which is a fundamental requirement for the homomorphism to be an isomorphism. However, this alone is merely an indication and does not guarantee isomorphism, as the homomorphism must also be bijective (i.e. injective and surjective).
 
-<!--One of the requirements for two groups to be homomorphic is to have the same cardinality which is true in our case. -->
-
 ```python
 sage: len(Q) == len(F64)
 True
@@ -138,7 +134,7 @@ sage: f
 Ring morphism:
   From: Univariate Quotient Polynomial Ring in z over Finite Field in a of size 2^2 with modulus y^3 + y + 1
   To:   Finite Field in w of size 2^6
-  Defn: w |--> z^5 + z^4 + z^2 + 1
+  Defn: w |--> z^4 + z^2 + z + 1
 ```
 
 1. What the heck if `splitting_field`? I don't really know in detail but think of it as an extension field that $P$ is raised to. We will treat it as equivalent to $\mathbb{F}_{64}$.
@@ -179,6 +175,10 @@ z^5 + z^4 + z^2
 sage: f = Q.hom([z^5+z^4+z^2+1], codomain=F64) ; f(w^6)
 z^4 + z^2 + z
 ```
+
+To avoid inaccuracy in this blog post due to non-determinism, we will fix:
+
+$$r = z^4 + z^2 + z + 1$$
 
 # Problem demonstration
 
@@ -258,12 +258,12 @@ for p in list(Q):
 ```
 Output:
 ```
-a*w^2 + w + 1
+(a + 1)*w^2 + a*w + 1
 ```
 
-Bingo! The vector $\vec{s} = \\{1, 1, a\\}$ is the coefficient vector we are looking for. This will serve as our sanity check when verifying the solution's correctness.
+Bingo! The vector $\vec{s} = \\{1, 1, a+1\\}$ is the coefficient vector we are looking for. This will serve as our sanity check when verifying the solution's correctness.
 
-<p style='text-align: center'><small><i>Since <code>any_root</code> is non-deterministic, the polynomial $p$ might vary but the core idea remains unchanged.</i></small></p>
+<p style='text-align: center'><small><i>With <code>any_root</code>, the polynomial $p$ might vary but the core idea remains unchanged.</i></small></p>
 
 Now, back to the math...
 
@@ -347,21 +347,21 @@ $\mathbb{F}_4$ contains only $2^2=4$ elements. Trying to lift $a^2$ directly, re
 
 For example, if we end up with:
 
-$$\vec{s} = \begin{pmatrix}1 & 0 & 0 & 1 & 1 & 1\end{pmatrix}$$
+$$\vec{s} = \begin{pmatrix}1 & 0 & 1 & 1 & 0 & 1\end{pmatrix}$$
 
 we split $\vec{s}$ into three $2$-bit chunks and we get:
 
-$$a_0 = 1 + 0 \cdot a = 1 \\\ a_1 = 0 + 1 \cdot a = a \\\ a_2 = 1 + 1 \cdot a = a + 1$$
+$$a_0 = 1 + 0 \cdot a = 1 \\\ a_1 = 1 + 1 \cdot a = a + 1 \\\ a_2 = 0 + 1 \cdot a = a$$
 
 By lifting $a_i$ to $Q$ the following polynomial is formed:
 
-$$p(w) = 1 + a \cdot w + (a+1) \cdot w^2$$
+$$p(w) = 1 + (a+1) \cdot w + a \cdot w^2$$
 
 Programmatically, these lifts can be implemented as:
 ```python
-sage: s = [1, 0, 0, 1, 1, 1]
+sage: s = [1, 0, 1, 1, 0, 1]
 sage: Q([F4(s[i:i+2]) for i in range(0, len(s), 2)])
-(a + 1)*w^2 + a*w + 1
+a*w^2 + (a + 1)*w + 1
 ```
 
 What remains now is to construct the matrix $M$ and the target vector $T$. Let's begin with the target vector $T$.
@@ -485,7 +485,7 @@ $$
 M \cdot \vec{s} = T
 $$
 
-<center><small><i>WARNING! Keep in mind that $M$ might be different due to the non-deterministic nature of <code>any_root</code>.</i></small></center>
+<center><small><i>WARNING! You might get a different matrix $M$ if you use <code>any_root</code>.</i></small></center>
 
 ```python
 sage: M = Matrix(F64.base_ring(), [ # define M over the base field F_2
@@ -520,7 +520,7 @@ Ring morphism:
   Defn: z |--> (a + 1)*w^2 + a*w + 1
 ```
 
-For be 100% sure that this is the correct homomorphism, we can generate a few random values $l_0, l_1, ..., l_n \in \mathbb{F}_{64}$ and check whether:
+To be 100% sure that this is the correct homomorphism, we can generate a few random values $l_0, l_1, ..., l_n \in \mathbb{F}_{64}$ and check whether:
 
 $$l_i \stackrel{?}{=} f(f^{-1}(l_i))$$
 
