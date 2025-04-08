@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<link rel="icon" type="image/x-icon" href="/thumb.png">
+	<style type=text/css>body{font-family:monospace;}</style>
+	<title>A Deep Dive into Donex Ransomware (Part 1)</title>
+	
+	
+	<link rel="stylesheet" href="/css/style.css">
+	
+	
+</head>
+<body>
+	<header>
+	::::::::::::::::::::::::::::<br>
+	:: <a href="http://localhost:1313/" class='header-footer-anchor'>rasti&#39;s knowledge cave</a> ::<br>
+	::::::::::::::::::::::::::::
+	<div style="float: right;">nothing fancy yet</div><br>
+	<p>
+	<nav>
+		<a href="/" class='header-footer-anchor'><b>Start</b></a> ·
+		
+		
+		
+		<a href="/posts/" class='header-footer-anchor'><b>Posts</b></a> · 
+		
+		<a href="/categories/" class='header-footer-anchor'><b>Categories</b></a> · 
+		
+		<a href="/tags/" class='header-footer-anchor'><b>Tags</b></a>
+		
+	</nav>
+	</p>
+	
+</header>
+	
+<main>
+	<article>
+		<h1>A Deep Dive into Donex Ransomware (Part 1)</h1>
+		<small>Created at: 08/04/2025, 11:25:59</small><br>
+		<small>Last Updated at: 08/04/2025</small>
+		<br><br>.:
+		
+		
+		<a href="/tags/malware-analysis" class='header-footer-anchor'>#malware-analysis</a>, 
+		
+		<a href="/tags/reverse-engineering" class='header-footer-anchor'>#reverse-engineering</a>, 
+		
+		<a href="/tags/real-world" class='header-footer-anchor'>#real-world</a>
+		:.
+		<div>
+			<div style='cursor: pointer; border-radius: 3px; border:1px solid #888; padding: 7px; margin: 1.3em 0 1.3em 0;'>
+    <details>
+        <summary>Table of Contents</summary>
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#initial-analysis">Initial Analysis</a></li>
+    <li><a href="#sub_4035c0-main">sub_4035C0 (main)</a></li>
+    <li><a href="#sub_4030d0-ransomware-initialization">sub_4030D0 (Ransomware Initialization)</a>
+      <ul>
+        <li><a href="#config-extraction">Config Extraction</a></li>
+        <li><a href="#deleting-the-shadow-copies">Deleting the shadow copies</a></li>
+        <li><a href="#disabling-and-reverting-wow64-file-system-redirection">Disabling and Reverting WoW64 File System Redirection</a></li>
+      </ul>
+    </li>
+    <li><a href="#conclusion">Conclusion</a></li>
+  </ul>
+</nav>
+    </details>
+</div>
+<h1 id="introduction">Introduction</h1>
+<p>I stumbled upon this cool <a href="https://cfp.recon.cx/recon2024/talk/LQ8B7H/" target="_blank" rel="noopener">talk</a> and learned about the existence of the Donex ransomware. I didn&rsquo;t want to spoil myself so I decided to do the analysis first and then watch the talk. The only thing I know is that it&rsquo;s possible to make a decryptor for this ransomware which really hyped me up and thought it&rsquo;s a good opportunity to sharpen my malware analysis skills and at the same time share my findings with all of you. I am also recording my analysis process and uploading the videos in my YouTube channel. You can find the playlist <a href="https://www.youtube.com/playlist?list=PLTB_YxFt6y5NLTaxytTa70E7Tvh4KaoCV" target="_blank" rel="noopener">here</a>.</p>
+<p>You can download the malware <a href="https://bazaar.abuse.ch/sample/0adde4246aaa9fb3964d1d6cf3c29b1b13074015b250eb8e5591339f92e1e3ca/" target="_blank" rel="noopener">sample</a> from Malware Bazaar.</p>
+<div style='color: orange'><i><b>WARNING!</b> <u>It's highly recommended to work in an isolated virtual machine without internet connection as the malware is 100% real. Running it on your host will harm your files.</u></i></div>
+<h1 id="initial-analysis">Initial Analysis</h1>
+<ul>
+<li>SHA256 Checksum: <code>0adde4246aaa9fb3964d1d6cf3c29b1b13074015b250eb8e5591339f92e1e3ca</code></li>
+<li>CPU Architecture: 32-bit (x86)</li>
+</ul>
+<h1 id="sub_4035c0-main">sub_4035C0 (main)</h1>
+<p>In the decompilation, we see the following two lines.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>WindowA <span style="color:#f92672">=</span> <span style="color:#a6e22e">FindWindowA</span>(<span style="color:#e6db74">&#34;ConsoleWindowClass&#34;</span>, <span style="color:#f92672">*</span>argv); <span style="color:#75715e">// *argv = argv[0]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#a6e22e">ShowWindow</span>(WindowA, SW_HIDE);
+</span></span></code></pre></div><p>This is a common technique that the malwares use to operate in stealth.</p>
+<p>It searches for the console window spawned by the malware executable and hides it. <code>argv[0]</code> corresponds to the first argument of the program which is the executable name.</p>
+<h1 id="sub_4030d0-ransomware-initialization">sub_4030D0 (Ransomware Initialization)</h1>
+<p>First, it creates a mutex with name &ldquo;CheckMutex&rdquo;. If it already exists, it exits.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">if</span> ( <span style="color:#a6e22e">CreateMutexA</span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>, <span style="color:#e6db74">&#34;CheckMutex&#34;</span>) <span style="color:#f92672">&amp;&amp;</span> <span style="color:#a6e22e">GetLastError</span>() <span style="color:#f92672">==</span> ERROR_ALREADY_EXISTS )
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">_loaddll</span>(<span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">JUMPOUT</span>(<span style="color:#ae81ff">0x403338</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="config-extraction">Config Extraction</h2>
+<p>A huge encrypted blob is then decrypted with the key <code>0xA9</code>. The size of this blob is <code>0x21e7</code> bytes and it turns out to be an XML object with the malware configuration (authors being creative for real&hellip;).</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">for</span> ( i <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>; i <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0x21C0</span>; i <span style="color:#f92672">+=</span> <span style="color:#ae81ff">64</span> )
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">*&amp;</span>xml_blob[i] <span style="color:#f92672">=</span> <span style="color:#a6e22e">_mm_xor_si128</span>(XOR_KEY, <span style="color:#f92672">*&amp;</span>xml_blob[i]);
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">*&amp;</span>xml_blob[i <span style="color:#f92672">+</span> <span style="color:#ae81ff">16</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">_mm_xor_si128</span>(XOR_KEY, <span style="color:#f92672">*&amp;</span>xml_blob[i <span style="color:#f92672">+</span> <span style="color:#ae81ff">16</span>]);
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">*&amp;</span>xml_blob[i <span style="color:#f92672">+</span> <span style="color:#ae81ff">32</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">_mm_xor_si128</span>(<span style="color:#f92672">*&amp;</span>xml_blob[i <span style="color:#f92672">+</span> <span style="color:#ae81ff">32</span>], XOR_KEY);
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">*&amp;</span>xml_blob[i <span style="color:#f92672">+</span> <span style="color:#ae81ff">48</span>] <span style="color:#f92672">=</span> <span style="color:#a6e22e">_mm_xor_si128</span>(XOR_KEY, <span style="color:#f92672">*&amp;</span>xml_blob[i <span style="color:#f92672">+</span> <span style="color:#ae81ff">48</span>]);
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">for</span> ( ; i <span style="color:#f92672">&lt;</span> <span style="color:#ae81ff">0x21E7</span>; <span style="color:#f92672">++</span>i )
+</span></span><span style="display:flex;"><span>    xml_blob[i] <span style="color:#f92672">^=</span> <span style="color:#ae81ff">0xA9u</span>;
+</span></span></code></pre></div><p>From this code, we deduce that the decryption algoritmh is simple XOR.</p>
+<p>Let&rsquo;s decrypt the first few bytes to verify our deductions.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#f92672">from</span> pwn <span style="color:#f92672">import</span> xor
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> xor(<span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\xa9</span><span style="color:#e6db74">&#39;</span>, bytes<span style="color:#f92672">.</span>fromhex(<span style="color:#e6db74">&#39;9596D1C4C589DFCCDBDAC0C6C7948E98&#39;</span>))
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">b</span><span style="color:#e6db74">&#34;&lt;?xml version=&#39;1&#34;</span>
+</span></span></code></pre></div><p>Bingo! Let&rsquo;s write a short python script to decrypt the XML configuration and dump it into a file.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> pefile
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> pwn <span style="color:#f92672">import</span> xor
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>pef <span style="color:#f92672">=</span> pefile<span style="color:#f92672">.</span>PE(<span style="color:#e6db74">&#39;0adde4246aaa9fb3964d1d6cf3c29b1b13074015b250eb8e5591339f92e1e3ca&#39;</span>)
+</span></span><span style="display:flex;"><span>BLOB_SIZE <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x21e7</span>
+</span></span><span style="display:flex;"><span>encrypted_xml_blob <span style="color:#f92672">=</span> pef<span style="color:#f92672">.</span>sections[<span style="color:#ae81ff">2</span>]<span style="color:#f92672">.</span>get_data()[:BLOB_SIZE]
+</span></span><span style="display:flex;"><span>xml_blob <span style="color:#f92672">=</span> xor(encrypted_xml_blob, <span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\xa9</span><span style="color:#e6db74">&#39;</span>)
+</span></span><span style="display:flex;"><span>open(<span style="color:#e6db74">&#39;config.xml&#39;</span>, <span style="color:#e6db74">&#39;w&#39;</span>)<span style="color:#f92672">.</span>write(xml_blob<span style="color:#f92672">.</span>decode())
+</span></span></code></pre></div><p>Here is a preview of the XML configuration:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-xml" data-lang="xml"><span style="display:flex;"><span><span style="color:#75715e">&lt;?xml version=&#39;1.0&#39; encoding=&#39;UTF-8&#39;?&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;root&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;white_extens&gt;</span>386;adv;ani;bat;bin;cab;cmd;com;...<span style="color:#f92672">&lt;REDACTED&gt;</span>...;key;hta;msi;pdb;search-ms<span style="color:#f92672">&lt;/white_extens&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;white_files&gt;</span>bootmgr;autorun.inf;boot.ini;...<span style="color:#f92672">&lt;REDACTED&gt;</span>...;GDIPFONTCACHEV1.DAT;d3d9caps.dat<span style="color:#f92672">&lt;/white_files&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;white_folders&gt;</span>$recycle.bin;config.msi;...<span style="color:#f92672">&lt;REDACTED&gt;</span>...;microsoft;appdata<span style="color:#f92672">&lt;/white_folders&gt;</span>	
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;kill_keep&gt;</span>sql;oracle;mysq;chrome;veeam;firefox;excel;msaccess;onenote;outlook;powerpnt;winword;wuauclt<span style="color:#f92672">&lt;/kill_keep&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;services&gt;</span>vss;sql;svc$;memtas;mepocs;msexchange;sophos;veeam;backup;GxVss;GxBlr;GxFWD;GxCVD;GxCIMgr<span style="color:#f92672">&lt;/services&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;black_db&gt;</span>ldf;mdf<span style="color:#f92672">&lt;/black_db&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;encryption_thread&gt;</span>30<span style="color:#f92672">&lt;/encryption_thread&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;walk_thread&gt;</span>15<span style="color:#f92672">&lt;/walk_thread&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;local_disks&gt;</span>true<span style="color:#f92672">&lt;/local_disks&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;network_shares&gt;</span>true<span style="color:#f92672">&lt;/network_shares&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;kill_processes&gt;</span>true<span style="color:#f92672">&lt;/kill_processes&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;kill_services&gt;</span>true<span style="color:#f92672">&lt;/kill_services&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;shutdown_system&gt;</span>true<span style="color:#f92672">&lt;/shutdown_system&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;delete_eventlogs&gt;</span>true<span style="color:#f92672">&lt;/delete_eventlogs&gt;</span>	
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;cmd&gt;</span>wmic shadowcopy delete /nointeractive<span style="color:#f92672">&lt;/cmd&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;cmd&gt;</span>vssadmin Delete Shadows /All /Quiet<span style="color:#f92672">&lt;/cmd&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;content&gt;</span>            !!! DoNex ransomware warning !!!
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>&amp;gt;&amp;gt;&amp;gt;&amp;gt; Your data are stolen and encrypted
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>The data will be published on TOR website if you do not pay the ransom 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>...<span style="color:#f92672">&lt;REDACTED&gt;</span>...
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>&amp;gt;&amp;gt;&amp;gt;&amp;gt; Warning! If you do not pay the ransom we will attack your company repeatedly again!
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/content&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;ico&gt;</span>AAABAAEAIEAAAAEAIACoEAAAF...<span style="color:#f92672">&lt;REDACTED&gt;</span>.../wAAf/+AB///wA////AP///4H/8=<span style="color:#f92672">&lt;/ico&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&lt;/root&gt;</span>
+</span></span></code></pre></div><p>You can view the entire file in my GitHub <a href="https://github.com/rasti37/malware-analysis/blob/main/Donex/config.xml" target="_blank" rel="noopener">repository</a>.</p>
+<p>Optionally, we can also extract the data from the <code>ico</code> XML element and base64-decode them to see the default icon that the ransomware sets for each encrypted file. You can also find this icon in my <a href="https://github.com/rasti37/malware-analysis/blob/main/Donex/icon.ico" target="_blank" rel="noopener">repository</a>.</p>
+<p>Then, the function <code>sub_410750</code> is called which calls <code>sub_410A10</code>. Searching online some of this function&rsquo;s strings, such as <code>&quot;Unable to add value node of type %s to parent&quot;</code>, we find out that this function is part of an open-source XML parsing library known as <a href="https://github.com/sharpee/mxml" target="_blank" rel="noopener"><code>mxml</code></a>. More specifically, this one is <a href="https://github.com/michaelrsweet/mxml/blob/master/mxml-file.c#L805" target="_blank" rel="noopener"><code>mxml_load_data</code></a>.</p>
+<h2 id="deleting-the-shadow-copies">Deleting the shadow copies</h2>
+<p>The function <code>sub_402DD0</code> gets the token of the current process and checks whether it belongs to the admins group. This is deduced from the subauthorities defined in the <code>AllocateAndInitializeSid</code> call. The subauthorities are the following:</p>
+<ul>
+<li><code>0x20</code> &ndash; Corresponds to the RID: <code>SECURITY_BUILTIN_DOMAIN_RID</code>.</li>
+<li><code>0x220</code> &ndash; Combination of RIDs: <code>0x200 | 0x20</code> which correspond to <code>DOMAIN_GROUP_RID_ADMINS | SECURITY_BUILTIN_DOMAIN_RID</code>.</li>
+</ul>
+<p>We can find these values from the original <a href="https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-adts/b9475e91-f00f-4c25-9117-a48e70584625" target="_blank" rel="noopener">documentation</a>.</p>
+<p>If the token belongs to the admins group, it executes the following commands:</p>
+<pre tabindex="0"><code>cmd /c &#34;wmic shadowcopy delete /nointeractive&#34;
+</code></pre><pre tabindex="0"><code>cmd /c &#34;vssadmin Delete Shadows /All /Quiet&#34;
+</code></pre><p>These commands are commonly used by ransomware threat actors to delete the shadow copies in windows systems so that victims cannot restore their original files back from the shadow copies.</p>
+<h2 id="disabling-and-reverting-wow64-file-system-redirection">Disabling and Reverting WoW64 File System Redirection</h2>
+<p>Let&rsquo;s analyze the following code snippet:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>ModuleHandleA <span style="color:#f92672">=</span> <span style="color:#a6e22e">GetModuleHandleA</span>(<span style="color:#e6db74">&#34;kernel32.dll&#34;</span>);
+</span></span><span style="display:flex;"><span>IsWow64Process <span style="color:#f92672">=</span> <span style="color:#a6e22e">GetProcAddress</span>(ModuleHandleA, <span style="color:#e6db74">&#34;IsWow64Process&#34;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> ( <span style="color:#f92672">!</span>IsWow64Process <span style="color:#f92672">||</span> (CurrentProcess <span style="color:#f92672">=</span> <span style="color:#a6e22e">GetCurrentProcess</span>(), <span style="color:#a6e22e">IsWow64Process</span>(CurrentProcess, <span style="color:#f92672">&amp;</span>j)) )
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> ( j )
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Wow64DisableWow64FsRedirection</span>(<span style="color:#f92672">&amp;</span>OldValue);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Definition from <a href="https://en.wikipedia.org/wiki/WoW64" target="_blank" rel="noopener">Wikipedia</a>:</p>
+<blockquote>
+<p>WoW64 (Windows 32-bit on Windows 64-bit) is a subsystem of the Windows operating system capable of running 32-bit applications on 64-bit Windows.</p></blockquote>
+<p>In other words, <code>WoW64</code> is the reason why we can run 32-bit applications (such as this ransomware) in 64-bit Windows systems.</p>
+<p>But what is file system redirection?</p>
+<p>By default, WoW64 transparently redirects all the system calls made by 32-bit applications to the system folder <code>C:\Windows\SysWoW64</code> which contains 32-bit libraries and executables.</p>
+<p>Calling <code>Wow64DisableWow64FsRedirection</code>, disables this file system redirection and as a result, the native System32 folder is used. This is mandatory for executing the shadow copy deletion as the malware needs to call the 32-bit <code>vssadmin</code> and <code>wmic</code> binaries. Once it&rsquo;s done, the redirection can be re-enabled using <code>Wow64RevertWow64FsRedirection</code>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>v8 <span style="color:#f92672">=</span> <span style="color:#a6e22e">GetModuleHandleA</span>(<span style="color:#e6db74">&#34;kernel32.dll&#34;</span>);
+</span></span><span style="display:flex;"><span>ProcAddress <span style="color:#f92672">=</span> <span style="color:#a6e22e">GetProcAddress</span>(v8, <span style="color:#e6db74">&#34;IsWow64Process&#34;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> ( <span style="color:#f92672">!</span>ProcAddress <span style="color:#f92672">||</span> (v10 <span style="color:#f92672">=</span> <span style="color:#a6e22e">GetCurrentProcess</span>(), <span style="color:#a6e22e">ProcAddress</span>(v10, <span style="color:#f92672">&amp;</span>j)) )
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> ( j )
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">Wow64RevertWow64FsRedirection</span>(OldValue);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h1 id="conclusion">Conclusion</h1>
+<p>That&rsquo;s all for the first post. In the next post we explore <code>sub_4014D0</code> as well as the next two initialization functions. Take care :)</p>
+
+		</div>
+	</article>
+</main>
+<aside>
+	<div>
+		<div>
+			<h3>RELATED POSTS</h3>
+		</div>
+		<div>
+			<ul>
+				
+				<li>2025-03-07 :: <a href="/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/">Computing Inverse Ring Homomorphisms (DIY)</a></li>
+				
+				<li>2025-03-01 :: <a href="/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/">(Crypto) Backdoor CTF 2024 - Hashing Frenzy</a></li>
+				
+			</ul>
+		</div>
+	</div>
+</aside>
+
+
+	<footer>
+	<p>&copy; 2025 :: <a href="http://localhost:1313/"
+			class='header-footer-anchor'><b>rasti&#39;s knowledge cave</b></a> ·
+		
+		<a href="https://github.com/rasti37" class='header-footer-anchor' target='_blank'><b>Github</b></a>
+	</p>
+</footer>
+
+</body>
+</html>

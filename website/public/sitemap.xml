@@ -2,28 +2,40 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/posts/</loc>
-    <lastmod>2025-03-08T22:52:50+02:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/</loc>
-    <lastmod>2025-03-08T22:52:50+02:00</lastmod>
+    <loc>http://localhost:1313/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/</loc>
+    <lastmod>2025-04-08T11:25:59+03:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/categories/</loc>
-    <lastmod>2025-03-07T00:01:27+02:00</lastmod>
+    <lastmod>2025-04-08T11:25:59+03:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/categories/malware-analysis/</loc>
+    <lastmod>2025-04-08T11:25:59+03:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/malware-analysis/</loc>
+    <lastmod>2025-04-08T11:25:59+03:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/posts/</loc>
+    <lastmod>2025-04-08T11:25:59+03:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/categories/projects/</loc>
+    <lastmod>2025-04-08T11:25:59+03:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/</loc>
+    <lastmod>2025-04-08T11:25:59+03:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/real-world/</loc>
+    <lastmod>2025-04-08T11:25:59+03:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/reverse-engineering/</loc>
+    <lastmod>2025-04-08T11:25:59+03:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/tags/</loc>
+    <lastmod>2025-04-08T11:25:59+03:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/</loc>
     <lastmod>2025-03-07T00:01:27+02:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/categories/projects/</loc>
-    <lastmod>2025-03-07T00:01:27+02:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/tags/real-world/</loc>
-    <lastmod>2025-03-07T00:01:27+02:00</lastmod>
-  </url><url>
     <loc>http://localhost:1313/tags/sage/</loc>
-    <lastmod>2025-03-07T00:01:27+02:00</lastmod>
-  </url><url>
-    <loc>http://localhost:1313/tags/</loc>
     <lastmod>2025-03-07T00:01:27+02:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/posts/2025-03-06-tsj-ctf-2022-babyrsa/</loc>

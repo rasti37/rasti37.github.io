@@ -116,7 +116,6 @@
 <p>In natural language:</p>
 <blockquote>
 <p>$A$ is the set of degree-$2$ polynomials in $y$ with coefficients in $\mathbb{F}_{2^2}$. But hey, when you do operations with these polynomials, reduce the result modulo the irreducible polynomial $y^3+y+1$.</p></blockquote>
-<!-- Notice that the degree of the polynomials in $A$ should be less than $3$; the degree of the irreducible polynomial. Last but not least, the field $\mathbb{F}_{2^2}$ contains 4 elements which are ***at most*** degree-$1$ polynomials with coefficients in $\mathbb{F}_2$; namely: $\\{0, 1, a, a+1\\}$. -->
 <p>It&rsquo;s time for converting the nitty-gritty maths into code.</p>
 <h2 id="defining-the-parameters-in-sage">Defining the parameters in Sage</h2>
 <p>First, we define $\mathbb{F}_{2^2}$:</p>
@@ -149,7 +148,6 @@
 </span></span><span style="display:flex;"><span>sage: str(list(F64))
 </span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;[0, z, z^2, z^3, z^4, z^5, z^4 + z^3 + z + 1, z^5 + z^4 + z^2 + z, z^5 + z^4 + z^2 + z + 1, z^5 + z^4 + z^2 + 1, z^5 + z^4 + 1, z^5 + z^4 + z^3 + 1, z^5 + z^3 + 1, z^3 + 1, z^4 + z, z^5 + z^2, z^4 + z + 1, z^5 + z^2 + z, z^4 + z^2 + z + 1, z^5 + z^3 + z^2 + z, z^2 + z + 1, z^3 + z^2 + z, z^4 + z^3 + z^2, z^5 + z^4 + z^3, z^5 + z^3 + z + 1, z^3 + z^2 + 1, z^4 + z^3 + z, z^5 + z^4 + z^2, z^5 + z^4 + z + 1, z^5 + z^4 + z^3 + z^2 + 1, z^5 + 1, z^4 + z^3 + 1, z^5 + z^4 + z, z^5 + z^4 + z^3 + z^2 + z + 1, z^5 + z^2 + 1, z^4 + 1, z^5 + z, z^4 + z^3 + z^2 + z + 1, z^5 + z^4 + z^3 + z^2 + z, z^5 + z^2 + z + 1, z^4 + z^2 + 1, z^5 + z^3 + z, z^3 + z^2 + z + 1, z^4 + z^3 + z^2 + z, z^5 + z^4 + z^3 + z^2, z^5 + z + 1, z^4 + z^3 + z^2 + 1, z^5 + z^4 + z^3 + z, z^5 + z^3 + z^2 + z + 1, z^2 + 1, z^3 + z, z^4 + z^2, z^5 + z^3, z^3 + z + 1, z^4 + z^2 + z, z^5 + z^3 + z^2, z + 1, z^2 + z, z^3 + z^2, z^4 + z^3, z^5 + z^4, z^5 + z^4 + z^3 + z + 1, z^5 + z^3 + z^2 + 1, 1]&#39;</span>
 </span></span></code></pre></div><p>It turns out that there exists a homomorphism (from the Greek «ὅμοιος» + «μορφή», &ldquo;similar form&rdquo;) that connects the elements of $Q$ and $F_{64}$. In fact, both fields share the same cardinality ($64$ elements) which is a fundamental requirement for the homomorphism to be an isomorphism. However, this alone is merely an indication and does not guarantee isomorphism, as the homomorphism must also be bijective (i.e. injective and surjective).</p>
-<!--One of the requirements for two groups to be homomorphic is to have the same cardinality which is true in our case. -->
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: len(Q) <span style="color:#f92672">==</span> len(F64)
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">True</span>
 </span></span></code></pre></div><p>Take a random element in $Q$, say $r = w^2 + a \cdot w + 1$. Since these groups are &ldquo;connected&rdquo; through the homomorphism, there <strong>might</strong> be an element of $\mathbb{F}_{64}$ that maps to $r$ (<em>this isn&rsquo;t always the case as the homomorphism must be injective, and we haven&rsquo;t proven that yet</em>). I might write another blog post in the future trying to break down injective and surjective maps with practical examples. For now, let&rsquo;s move forward and define the homomorphism between $Q$ and $\mathbb{F}_{64}$.</p>
@@ -450,6 +448,8 @@ $$</p>
 		</div>
 		<div>
 			<ul>
+				
+				<li>2025-04-08 :: <a href="/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/">A Deep Dive into Donex Ransomware (Part 1)</a></li>
 				
 			</ul>
 		</div>

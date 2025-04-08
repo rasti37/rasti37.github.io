@@ -6,8 +6,15 @@
     <description>Recent content on rasti&#39;s knowledge cave</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 07 Mar 2025 00:01:27 +0200</lastBuildDate>
+    <lastBuildDate>Tue, 08 Apr 2025 11:25:59 +0300</lastBuildDate>
     <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>A Deep Dive into Donex Ransomware (Part 1)</title>
+      <link>http://localhost:1313/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/</link>
+      <pubDate>Tue, 08 Apr 2025 11:25:59 +0300</pubDate>
+      <guid>http://localhost:1313/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/</guid>
+      <description>In this series of posts we dive into the internals of the Donex Ransomware. This series serves mostly as notes to keep track of my findings. I also record the entire analysis process and upload a series of videos on my YouTube channel. More info inside the post :)</description>
+    </item>
     <item>
       <title>Computing Inverse Ring Homomorphisms (DIY)</title>
       <link>http://localhost:1313/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/</link>
