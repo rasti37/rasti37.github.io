@@ -179,7 +179,7 @@ But what is file system redirection?
 
 By default, WoW64 transparently redirects all the system calls made by 32-bit applications to the system folder `C:\Windows\SysWoW64` which contains 32-bit libraries and executables.
 
-Calling `Wow64DisableWow64FsRedirection`, disables this file system redirection and as a result, the native System32 folder is used. This is mandatory for executing the shadow copy deletion as the malware needs to call the 32-bit `vssadmin` and `wmic` binaries. Once it's done, the redirection can be re-enabled using `Wow64RevertWow64FsRedirection`.
+Calling `Wow64DisableWow64FsRedirection`, disables this file system redirection and as a result, the native System32 folder is used. This is mandatory for executing the shadow copy deletion as the malware needs to call the 64-bit `vssadmin` and `wmic` binaries. Once it's done, the redirection can be re-enabled using `Wow64RevertWow64FsRedirection`.
 
 ```c
 v8 = GetModuleHandleA("kernel32.dll");
