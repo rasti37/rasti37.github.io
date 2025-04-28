@@ -23,7 +23,7 @@ tags:
 
 I stumbled upon this cool [talk](https://cfp.recon.cx/recon2024/talk/LQ8B7H/) and learned about the existence of the Donex ransomware. I didn't want to spoil myself so I decided to do the analysis first and then watch the talk. The only thing I know is that it's possible to make a decryptor for this ransomware which really hyped me up and thought it's a good opportunity to sharpen my malware analysis skills and at the same time share my findings with all of you. I am also recording my analysis process and uploading the videos in my YouTube channel. You can find the playlist [here](https://www.youtube.com/playlist?list=PLTB_YxFt6y5NLTaxytTa70E7Tvh4KaoCV).
 
-You can download the malware [sample](https://bazaar.abuse.ch/sample/0adde4246aaa9fb3964d1d6cf3c29b1b13074015b250eb8e5591339f92e1e3ca/) from Malware Bazaar.
+You can find and download the malware [sample](https://bazaar.abuse.ch/sample/0adde4246aaa9fb3964d1d6cf3c29b1b13074015b250eb8e5591339f92e1e3ca/) from Malware Bazaar.
 
 <div style='color: orange'><i><b>WARNING!</b> <u>It's highly recommended to work in an isolated virtual machine without internet connection as the malware is 100% real. Running it on your host will harm your files.</u></i></div>
 
