@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<link rel="icon" type="image/x-icon" href="/thumb.png">
+	<style type=text/css>body{font-family:monospace;}</style>
+	<title>A Deep Dive Into Donex Ransomware [Part 2]</title>
+	
+	
+	<link rel="stylesheet" href="/css/style.css">
+	
+	
+</head>
+<body>
+	<header>
+	::::::::::::::::::::::::::::<br>
+	:: <a href="http://localhost:1313/" class='header-footer-anchor'>rasti&#39;s knowledge cave</a> ::<br>
+	::::::::::::::::::::::::::::
+	<div style="float: right;">nothing fancy yet</div><br>
+	<p>
+	<nav>
+		<a href="/" class='header-footer-anchor'><b>Start</b></a> ·
+		
+		
+		
+		<a href="/posts/" class='header-footer-anchor'><b>Posts</b></a> · 
+		
+		<a href="/categories/" class='header-footer-anchor'><b>Categories</b></a> · 
+		
+		<a href="/tags/" class='header-footer-anchor'><b>Tags</b></a>
+		
+	</nav>
+	</p>
+	
+</header>
+	
+<main>
+	<article>
+		<h1>A Deep Dive Into Donex Ransomware [Part 2]</h1>
+		<small>Created at: 18/04/2025, 15:08:12</small><br>
+		
+		
+		<br>.:
+		
+		
+		<a href="/tags/malware-analysis" class='header-footer-anchor'>#malware-analysis</a>, 
+		
+		<a href="/tags/reverse-engineering" class='header-footer-anchor'>#reverse-engineering</a>, 
+		
+		<a href="/tags/real-world" class='header-footer-anchor'>#real-world</a>
+		:.
+		<div>
+			<div style='cursor: pointer; border-radius: 3px; border:1px solid #888; padding: 7px; margin: 1.3em 0 1.3em 0;'>
+    <details>
+        <summary>Table of Contents</summary>
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#part-1-checkpoint">Part 1 Checkpoint</a></li>
+    <li><a href="#sub_4014d0-random-16-byte-key-generation"><code>sub_4014d0</code> (Random 16-byte key Generation)</a></li>
+    <li><a href="#sub_401a30-figuring-out-the-cryptographic-library"><code>sub_401a30</code> (Figuring out the cryptographic library)</a>
+      <ul>
+        <li><a href="#vibe-search-prompt-creating">Vibe search prompt creating</a></li>
+        <li><a href="#sub_402500-extracting-the-rsa-public-key-from-the-malwares-overlay"><code>sub_402500</code> (Extracting the RSA public key from the malware&rsquo;s overlay)</a></li>
+        <li><a href="#converting-the-overlay-data-to-an-rsa-public-key">Converting the overlay data to an RSA public key</a></li>
+      </ul>
+    </li>
+    <li><a href="#sub_4033f0-setting-the-default-icon-for-encrypted-files"><code>sub_4033f0</code> (Setting the default icon for encrypted files)</a></li>
+  </ul>
+</nav>
+    </details>
+</div>
+<p><a href="https://rasti37.github.io/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1" target="_blank" rel="noopener">Here</a> you can find part 1 of my Donex Ransomware Analysis blog post series.</p>
+<h1 id="introduction">Introduction</h1>
+<p>In case you are interested in a more detail analysis, I am also recording my analysis process and uploading the videos in my YouTube channel. You can find the playlist <a href="https://www.youtube.com/playlist?list=PLTB_YxFt6y5NLTaxytTa70E7Tvh4KaoCV" target="_blank" rel="noopener">here</a>.</p>
+<div style='color: orange'><i><b>WARNING!</b> <u>It's highly recommended to work in an isolated virtual machine without internet connection as the malware is 100% real. Running it on your host will harm your files.</u></i></div>
+<h1 id="part-1-checkpoint">Part 1 Checkpoint</h1>
+<p>This is how our decompilation looks like from the first part.</p>
+<p>
+<figure>
+  <img src="ida_ransomware_init_part_1.png" alt="" />
+</figure>
+
+
+</p>
+<p>We have a good idea of what the malware does so far but we still have to deal with the three last mysterious functions, namely <code>0x4014d0</code>, <code>0x401a30</code> and <code>0x4033f0</code>. Since we love cryptography (at least I do), we expect to find the crypto-related thingies in there so let&rsquo;s get into it.</p>
+<h1 id="sub_4014d0-random-16-byte-key-generation"><code>sub_4014d0</code> (Random 16-byte key Generation)</h1>
+<p>Let&rsquo;s isolate the part of the code that we will analyze.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>BOOL __usercall sub_4014D0<span style="color:#960050;background-color:#1e0010">@</span><span style="color:#f92672">&lt;</span>eax<span style="color:#f92672">&gt;</span>(HCRYPTPROV a1<span style="color:#960050;background-color:#1e0010">@</span><span style="color:#f92672">&lt;</span>ebp<span style="color:#f92672">&gt;</span>, <span style="color:#66d9ef">signed</span> <span style="color:#66d9ef">int</span> a2)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// [COLLAPSED LOCAL DECLARATIONS. PRESS KEYPAD CTRL-&#34;+&#34; TO EXPAND]
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>  v13[<span style="color:#ae81ff">1</span>] <span style="color:#f92672">=</span> a1;
+</span></span><span style="display:flex;"><span>  v13[<span style="color:#ae81ff">2</span>] <span style="color:#f92672">=</span> retaddr;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> ( <span style="color:#a6e22e">CryptAcquireContextA</span>(v13, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1u</span>, <span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">||</span> <span style="color:#a6e22e">GetLastError</span>() <span style="color:#f92672">!=</span> <span style="color:#ae81ff">0x80090016</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">||</span> (result <span style="color:#f92672">=</span> <span style="color:#a6e22e">CryptAcquireContextA</span>(v13, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1u</span>, <span style="color:#ae81ff">8u</span>)) )
+</span></span><span style="display:flex;"><span>  {
+</span></span><span style="display:flex;"><span>    v3 <span style="color:#f92672">=</span> <span style="color:#a6e22e">malloc</span>(a2);
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">memset</span>(v3, <span style="color:#ae81ff">0</span>, a2);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> ( <span style="color:#a6e22e">CryptGenRandom</span>(v13[<span style="color:#ae81ff">0</span>], a2, v3) )
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      v4 <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">if</span> ( a2 <span style="color:#f92672">&gt;</span> <span style="color:#ae81ff">0</span> )
+</span></span><span style="display:flex;"><span>      {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> ( a2 <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">8</span> <span style="color:#f92672">&amp;&amp;</span> dword_439E74 <span style="color:#f92672">&gt;=</span> <span style="color:#ae81ff">2</span> )
+</span></span><span style="display:flex;"><span>        {
+</span></span><span style="display:flex;"><span>          <span style="color:#75715e">// ... REDACTED ...
+</span></span></span></code></pre></div><p>The redacted part performs just a bunch of arbitrary numerical operations such as additions, shuffles, XORs etc.</p>
+<p>As in every situation that we deal with with the Windows API, we will embrace <a href="https://learn.microsoft.com/en-us/windows/win32/api/" target="_blank" rel="noopener">https://learn.microsoft.com/en-us/windows/win32/api/</a> - our home sweet home. Looking at the documentation while reverse engineering, helps us label function arguments which significantly helps in our understanding of how the program operates.</p>
+<p>From the documentation of the (deprecated) function <a href="https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-cryptacquirecontexta" target="_blank" rel="noopener"><code>CryptAquireContextA</code></a>, we deduce that the type of <code>v13</code> should be <code>HCRYPTPROV *</code> so we can change its type in IDA by pressing <code>Y</code>. Then, the penultimate argument, which corresponds to <code>dwProvType</code>, has the value <code>0x01</code>. <a href="https://learn.microsoft.com/en-us/windows/win32/SecCrypto/cryptographic-provider-types" target="_blank" rel="noopener">Here</a> you can find a list of all the available cryptographic provider types. But <code>0x01</code> is quite useless to us, we need to find the macro name corresponding to that value. We can click on <code>0x01</code> and press <code>M</code>. This will show us a list of defined enums and macros inside IDA. We search for <code>PROV_</code> and we find that <code>0x01</code> corresponds to <code>PROV_RSA_FULL</code>.</p>
+<p>
+<figure>
+  <img src="ida_prov_enums.png" alt="" />
+</figure>
+
+
+</p>
+<p>Similarly, we find that the error code <code>0x80090016</code> corresponds to <code>NTE_BAD_KEYSET</code>. Moreover, the last argument of the next call to <code>CryptAquireContextA</code>, which corresponds to <code>dwFlags</code> has the value <code>0x08</code>. Following a similar approach, we find that this flag value corresponds to <code>CRYPT_NEWKEYSET</code>.</p>
+<p>Our next API function is <code>CryptGenRandom</code>. As the name implies, this function generates random bytes of given length and stores them into a buffer. From the docs, we can rename the arguments as follows:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#a6e22e">CryptGenRandom</span>(hProv, dwLen, pbBuffer)
+</span></span></code></pre></div><p>The argument of <code>sub_4014d0</code> is <code>0x10</code> which turns out to be <code>dwLen</code>. From that, we understand that a random 16-byte string is generated and stored in <code>pbBuffer</code>. Given that this is a ransomware, we can suspect that this is a symmetric encryption key. This key is then furtherly processed and is finally returned from this function.
+Honestly, I really don&rsquo;t know why the malware authors decided to process the key and not just use a plain 16-byte string as the key. This additional process adds nothing to the security of the key.</p>
+<p>Anyways, let&rsquo;s rename <code>sub_4014d0</code> to <code>generate_random_16byte_key</code>.</p>
+<h1 id="sub_401a30-figuring-out-the-cryptographic-library"><code>sub_401a30</code> (Figuring out the cryptographic library)</h1>
+<p>Chaos begins to emerge&hellip;</p>
+<p>This function appears to be part of some library that does cryptographic thingies. Reverse engineering such libraries can be extremely painful. For example, implementing RSA-2048 encryption in python can be trivially implemented as <code>c = pow(m, e, n)</code>. However, in C, there are no built-in data types to support such large numbers, so we need to build custom data types. Usually, these data types are arrays of specific sized words. For instance, a 2048-bit number could be represented as an array of 128 16-bit words. Implementing mathematical operations, such as modular exponentiation, using these custom data types is really, really &hellip; messy.</p>
+<p>I didn&rsquo;t even attempt to reverse engineer this function and quickly made the educated guess that the malware authors didn&rsquo;t implement their own crypto and used some open source cryptographic library. To find this library, we will follow the same approach as for the XML library in part 1.</p>
+<p>In <code>sub_401a30</code>, we see the following call:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#a6e22e">sub_4089C0</span>(v15, sub_4082D0, v14, <span style="color:#e6db74">&#34;rsa_encrypt&#34;</span>, <span style="color:#ae81ff">0xBu</span>);
+</span></span></code></pre></div><p>This is poggers for two reasons:</p>
+<ul>
+<li>We learned that RSA encryption is involved.</li>
+<li>We know a string literal that might prove significant for figuring out the cryptographic library.</li>
+</ul>
+<h2 id="vibe-search-prompt-creating">Vibe search prompt creating</h2>
+<p>Additionally, the ultimate key for successfully finding what we are looking for, is the search prompt that we use (yes, prompts were important before the LLM-era too).</p>
+<p>For our case, the prompt <code>&quot;rsa_encrypt&quot; in:github filetype:c</code> would be a good start. Unfortunately, this is quite a short string and pretty common among several libraries, such as polarssl, openssl, mbedtls and others.</p>
+<p>A good idea would be to search for longer strings which are more unlikely to appear in multiple libraries, for example <code>pbeWithSHAAnd3-KeyTripleDES-CBC</code>. With this prompt, the search returns only three results:</p>
+<p>
+<figure>
+  <img src="mbedtls-g-results.png" alt="" />
+</figure>
+
+
+</p>
+<blockquote>
+<p>Note that the second result is part of a minimalistic fork of the <a href="https://github.com/Mbed-TLS/mbedtls" target="_blank" rel="noopener">original</a> mbedtls repository.</p></blockquote>
+<p>We found a strong candidate for our library and that is <code>mbedtls</code>. Navigating the library&rsquo;s source code and by looking at specific strings like <a href="https://github.com/Mbed-TLS/mbedtls/blob/master/library/oid.c#L894" target="_blank" rel="noopener">these</a> are indicators that our finding is correct.</p>
+<p>
+<figure>
+  <img src="ida-mbedtls-structs.png" alt="" />
+</figure>
+
+
+</p>
+<p>The data appear adjacent, as in the original source code.</p>
+<p>Great! We found the library, let&rsquo;s see if we can find any references to the string <code>rsa_encrypt</code>. It turns out that it is referenced in the file <a href="https://github.com/Mbed-TLS/mbedtls/blob/master/programs/pkey/rsa_encrypt.c#L46" target="_blank" rel="noopener"><code>programs/pkey/rsa_encrypt.c</code></a>.</p>
+<p>The <code>program</code> folder contains some example use cases to help users use the mbedtls API and looks like the function we are analyzing is &hellip; heavily influenced by this specific program</p>
+<p>Library source code:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>pers <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;rsa_encrypt&#34;</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// REDACTED ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">mbedtls_mpi_init</span>(<span style="color:#f92672">&amp;</span>N); <span style="color:#a6e22e">mbedtls_mpi_init</span>(<span style="color:#f92672">&amp;</span>E);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">mbedtls_rsa_init</span>(<span style="color:#f92672">&amp;</span>rsa);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">mbedtls_ctr_drbg_init</span>(<span style="color:#f92672">&amp;</span>ctr_drbg);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">mbedtls_entropy_init</span>(<span style="color:#f92672">&amp;</span>entropy);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ret <span style="color:#f92672">=</span> <span style="color:#a6e22e">mbedtls_ctr_drbg_seed</span>(<span style="color:#f92672">&amp;</span>ctr_drbg, mbedtls_entropy_func,
+</span></span><span style="display:flex;"><span>                            <span style="color:#f92672">&amp;</span>entropy, (<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">unsigned</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>) pers,
+</span></span><span style="display:flex;"><span>                            <span style="color:#a6e22e">strlen</span>(pers));
+</span></span></code></pre></div><p>IDA decompilation:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#a6e22e">sub_406AD0</span>(v17);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">sub_406AD0</span>(v18);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">sub_407C60</span>(v16);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">sub_408770</span>(v15);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">sub_408430</span>(v14);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">sub_4089C0</span>(v15, sub_4082D0, v14, <span style="color:#e6db74">&#34;rsa_encrypt&#34;</span>, <span style="color:#ae81ff">0xBu</span>);
+</span></span></code></pre></div><p>I don&rsquo;t know about you but these two code snippets look identical to me. Eureka!😄</p>
+<div style='display: flex; gap: 3em; justify-content: center;'>
+  <a href="https://emoji.gg/emoji/Poggers"><img src="https://cdn3.emoji.gg/emojis/Poggers.png" width="64px" height="64px" alt="Poggers"></a>
+  <a href="https://emoji.gg/emoji/Poggers"><img src="https://cdn3.emoji.gg/emojis/Poggers.png" width="64px" height="64px" alt="Poggers"></a>
+  <a href="https://emoji.gg/emoji/Poggers"><img src="https://cdn3.emoji.gg/emojis/Poggers.png" width="64px" height="64px" alt="Poggers"></a>
+</div>
+<p>We can go ahead and carefully rename the variables and the symbols in our decompilation until the result looks identical to the original. Then the function should look as follows:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span><span style="color:#66d9ef">__cdecl</span> <span style="color:#a6e22e">sub_401A30</span>(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>random_16byte_key, <span style="color:#66d9ef">size_t</span> key_length)
+</span></span><span style="display:flex;"><span>{  
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// REDACTED ...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">mbedtls_mpi_init</span>(N);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">mbedtls_mpi_init</span>(E);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">mbedtls_rsa_init</span>(rsa_ctxt);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">mbedtls_ctr_drbg_init</span>(ctr_drbg);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">mbedtls_entropy_init</span>(entropy);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">mbedtls_ctr_drbg_seed</span>(ctr_drbg, mbedtls_entropy_func, entropy, <span style="color:#e6db74">&#34;rsa_encrypt&#34;</span>, <span style="color:#ae81ff">0xBu</span>);
+</span></span><span style="display:flex;"><span>  v4 <span style="color:#f92672">=</span> <span style="color:#a6e22e">sub_402500</span>(<span style="color:#f92672">&amp;</span>Block);
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// REDACTED...
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">mbedtls_mpi_read_file</span>(N, <span style="color:#ae81ff">0x10u</span>, v22);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">mbedtls_mpi_read_file</span>(E, <span style="color:#ae81ff">0x10u</span>, v10);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">mbedtls_rsa_import</span>(rsa_ctxt, N, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, E);
+</span></span><span style="display:flex;"><span>  encrypted_random_16byte_key <span style="color:#f92672">=</span> <span style="color:#a6e22e">malloc</span>(<span style="color:#ae81ff">0x200u</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">memset</span>(encrypted_random_16byte_key, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0x200u</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">mbedtls_rsa_rsaes_pkcs1_v15_encrypt</span>(
+</span></span><span style="display:flex;"><span>    rsa_ctxt,
+</span></span><span style="display:flex;"><span>    mbedtls_ctr_drbg_random,
+</span></span><span style="display:flex;"><span>    ctr_drbg,
+</span></span><span style="display:flex;"><span>    key_length,
+</span></span><span style="display:flex;"><span>    random_16byte_key,
+</span></span><span style="display:flex;"><span>    encrypted_random_16byte_key);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> encrypted_random_16byte_key;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>However, there is still one function not defined in mbedtls and looks donex-specific; that is <code>sub_402500</code>.</p>
+<h2 id="sub_402500-extracting-the-rsa-public-key-from-the-malwares-overlay"><code>sub_402500</code> (Extracting the RSA public key from the malware&rsquo;s overlay)</h2>
+<p>For some reason, this function is unnecessarily verbose, while all it does is:</p>
+<ul>
+<li>The malware opens itself.</li>
+<li>Reads the data and stores them into a buffer.</li>
+<li>Returns a specific offset inside this buffer.</li>
+</ul>
+<p>One can debug this piece of code inside a VM or do the arithmetic by hand using any hex editor, only to find out that:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>v9 <span style="color:#f92672">=</span> <span style="color:#f92672">*</span>a1 <span style="color:#f92672">+</span> <span style="color:#f92672">*</span>(<span style="color:#f92672">*</span>a1 <span style="color:#f92672">+</span> <span style="color:#ae81ff">60</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">return</span> <span style="color:#f92672">*</span>a1 <span style="color:#f92672">+</span> <span style="color:#f92672">*</span>(v9 <span style="color:#f92672">+</span> <span style="color:#f92672">*</span>(v9 <span style="color:#f92672">+</span> <span style="color:#ae81ff">20</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">40</span> <span style="color:#f92672">*</span> <span style="color:#f92672">*</span>(v9 <span style="color:#f92672">+</span> <span style="color:#ae81ff">6</span>)) <span style="color:#f92672">+</span> <span style="color:#f92672">*</span>(v9 <span style="color:#f92672">+</span> <span style="color:#f92672">*</span>(v9 <span style="color:#f92672">+</span> <span style="color:#ae81ff">20</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">40</span> <span style="color:#f92672">*</span> <span style="color:#f92672">*</span>(v9 <span style="color:#f92672">+</span> <span style="color:#ae81ff">6</span>) <span style="color:#f92672">+</span> <span style="color:#ae81ff">4</span>);
+</span></span></code></pre></div><p>returns the offset <code>0x37e00</code>. At this offset, there are some hex data defined.</p>
+<p>It&rsquo;s a good exercise to try and figure out how this value is derived but here is my reasoning:</p>
+<p>Since a PE file is read, we know that position <code>0x00</code> points to the <code>IMAGE_DOS_HEADER</code> and that position <code>0x60</code> points to the <code>IMAGE_NT_HEADERS</code>. Therefore we can change the type of these variables and then the decompilation makes much more sense.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>nt_headers <span style="color:#f92672">=</span> (<span style="color:#f92672">*&amp;</span>a1<span style="color:#f92672">-&gt;</span>e_magic <span style="color:#f92672">+</span> <span style="color:#f92672">*</span>(<span style="color:#f92672">*&amp;</span>a1<span style="color:#f92672">-&gt;</span>e_magic <span style="color:#f92672">+</span> <span style="color:#ae81ff">60</span>));
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">return</span> <span style="color:#f92672">*&amp;</span>a1<span style="color:#f92672">-&gt;</span>e_magic                                       
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">+</span> <span style="color:#f92672">*</span>(<span style="color:#f92672">&amp;</span>nt_headers<span style="color:#f92672">-&gt;</span>Signature <span style="color:#f92672">+</span> <span style="color:#ae81ff">40</span> <span style="color:#f92672">*</span> nt_headers<span style="color:#f92672">-&gt;</span>FileHeader.NumberOfSections <span style="color:#f92672">+</span> nt_headers<span style="color:#f92672">-&gt;</span>FileHeader.SizeOfOptionalHeader)               <span style="color:#75715e">// 0x110 + 40 * 0x05 + 0xe0 = 0x2b8
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#f92672">+</span> <span style="color:#f92672">*</span>(<span style="color:#f92672">&amp;</span>nt_headers<span style="color:#f92672">-&gt;</span>FileHeader.Machine <span style="color:#f92672">+</span> <span style="color:#ae81ff">40</span> <span style="color:#f92672">*</span> nt_headers<span style="color:#f92672">-&gt;</span>FileHeader.NumberOfSections <span style="color:#f92672">+</span> nt_headers<span style="color:#f92672">-&gt;</span>FileHeader.SizeOfOptionalHeader);   <span style="color:#75715e">// 0x114 + 40 * 0x05 + 0xe0 = 0x2bc
+</span></span></span></code></pre></div><p>This can be translated to:</p>
+<pre tabindex="0"><code>*(0x00 + *(0x110 + 40 * 0x05 + 0xe0) + *(0x114 + 40 * 0x05 + 0xe0))
+</code></pre><p>or equivalently:</p>
+<pre tabindex="0"><code>*(0x00 + *(0x02b8) + *(0x02bc)) = *(0x00001c00 + 0x00036200) = *(0x37e00)
+</code></pre><h2 id="converting-the-overlay-data-to-an-rsa-public-key">Converting the overlay data to an RSA public key</h2>
+<p>Back to <code>sub_401A30</code>, after the call to <code>sub_402500</code>, there are the following lines:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>v4 <span style="color:#f92672">=</span> <span style="color:#a6e22e">sub_402500</span>(<span style="color:#f92672">&amp;</span>Block);
+</span></span><span style="display:flex;"><span>v5 <span style="color:#f92672">=</span> v20;
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">qmemcpy</span>(v2, v4, <span style="color:#ae81ff">0x200u</span>);
+</span></span></code></pre></div><p>It looks like it copies <code>0x200 = 512</code> bytes from this offset and copies it to <code>v2</code>. At this point, knowing that RSA is involved in the ransomware, we are pretty sure that this is the public RSA-4096 modulus <code>N</code>. For completeness (and have some impact on the google search indexing algorithm), the modulus is:</p>
+<pre tabindex="0"><code>E3958800A4EE74BF5983967E3C658693CA93777EB8CA79FD724F6E6F71CD4724FFCD0F244AEBE33B87CC9F453878AB0C2DD69406C8ADFACE7AF9FAE46A37B5E5FC835DB3AE3F2261CD768F55CE15F327E6DB6142830A6CF5998143330268CFC7155E3B1B0161BA109403FDFA3D61A03AD24ED7F2B41E8A0BAE74A8C938F97B648546CE3EC0AD8B4115A156D568EE499B0D6411B0F9BC6E5087D062E3D541B3FE0B950412C399276EB0EF4D39743AE8411B6B42DBBC5694245816AC1BF99E5A1B1FC3870213ECA845807D5DF81EB07AC9F76894E31B89A2640FA40858CDEFD2B951B40927B64FC1A364FCE781DF4D90EB8F64DC8D4099A233EB3D791508809289
+</code></pre><p>Then, the public exponent <code>E</code> lies, which is the standard value <code>0x010001</code> and finally, there is a hex extension that the malware appends to all the encrypted files, that is <code>f58A66B51</code>.</p>
+<p>Having figured out all this, let&rsquo;s summarize what <code>sub_401A30</code> does.</p>
+<ul>
+<li>Initializes the rsa and the entropy context along with some other stuff required for encrypting with RSA.</li>
+<li>Extracts the RSA public key from the malware&rsquo;s overlay data and converts them from hex to mbedtls&rsquo; data type <code>mpi</code>.</li>
+<li>It encrypts the 16-byte symmetric key generated from <code>sub_4014d0</code> using PKCS #1 v1.5 RSA-4096.</li>
+</ul>
+<p>Therefore, let&rsquo;s rename <code>sub_401A30</code> to <code>rsa_encrypt_random_16byte_key</code> and <code>sub_402500</code> to <code>read_public_key_from_self</code>.</p>
+<p>Moving on&hellip;</p>
+<h1 id="sub_4033f0-setting-the-default-icon-for-encrypted-files"><code>sub_4033f0</code> (Setting the default icon for encrypted files)</h1>
+<p>After the analysis of the previous function, this one should feel like a breeze.</p>
+<p>Most symbols and variable names are already there so it&rsquo;s pretty straight forward to understand that this function, extracts the data from the <code>ico</code> XML tag, base64-decodes them and writes them to the local file <code>C:\ProgramData\icon.ico</code>.</p>
+<p>This is deduced by the following snippet:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span>v0 <span style="color:#f92672">=</span> <span style="color:#a6e22e">fopen</span>(<span style="color:#e6db74">&#34;C:</span><span style="color:#ae81ff">\\</span><span style="color:#e6db74">ProgramData</span><span style="color:#ae81ff">\\</span><span style="color:#e6db74">icon.ico&#34;</span>, <span style="color:#e6db74">&#34;wb&#34;</span>);
+</span></span><span style="display:flex;"><span>Element <span style="color:#f92672">=</span> <span style="color:#a6e22e">mxmlFindElement</span>(xml_node_tree, xml_node_tree, <span style="color:#e6db74">&#34;ico&#34;</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span>element_data <span style="color:#f92672">=</span> <span style="color:#a6e22e">mxml_extract_element_data</span>(Element);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">sub_408A50</span>(<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">0</span>, <span style="color:#f92672">&amp;</span>ElementCount, element_data, <span style="color:#a6e22e">strlen</span>(element_data));
+</span></span><span style="display:flex;"><span>v3 <span style="color:#f92672">=</span> <span style="color:#a6e22e">malloc_wrapper</span>(ElementCount);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">sub_408A50</span>(v3, ElementCount, <span style="color:#f92672">&amp;</span>ElementCount, element_data, <span style="color:#a6e22e">strlen</span>(element_data));
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fwrite</span>(v3, <span style="color:#ae81ff">1u</span>, ElementCount, v0);
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">fclose</span>(v0);
+</span></span></code></pre></div><p>Since the data in <code>config.xml</code> are base64-encoded, we make an educated guess that <code>sub_408A50</code> does the base64 decoding. It calls it twice because the first time it needs to determine the size of the decoded data so that it can allocate a proper buffer to store them into. The data are actually stored in <code>v3</code> in the second function call.</p>
+<p>Finally, there are some registry keys being set that do the following:</p>
+<ul>
+<li>Set the string <code>.f58A66B51</code> as the extension for any encrypted file</li>
+<li>Set <code>icon.ico</code> as the default icon for the encrypted files.</li>
+</ul>
+<p>Let&rsquo;s rename <code>sub_4033f0</code> to <code>set_default_icon_and_post_enc_extension</code>.</p>
+<p>That&rsquo;s all dudes and dudettes, see ya on the next part🙂</p>
+
+		</div>
+	</article>
+</main>
+<aside>
+	<div>
+		<div>
+			<h3>RELATED POSTS</h3>
+		</div>
+		<div>
+			<ul>
+				
+				<li>2025-04-08 :: <a href="/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/">A Deep Dive into Donex Ransomware [Part 1]</a></li>
+				
+				<li>2025-03-07 :: <a href="/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/">Computing Inverse Ring Homomorphisms (DIY)</a></li>
+				
+			</ul>
+		</div>
+	</div>
+</aside>
+
+
+	<footer>
+	<p>&copy; 2025 :: <a href="http://localhost:1313/"
+			class='header-footer-anchor'><b>rasti&#39;s knowledge cave</b></a> ·
+		
+		<a href="https://github.com/rasti37" class='header-footer-anchor' target='_blank'><b>Github</b></a>
+	</p>
+</footer>
+
+</body>
+</html>

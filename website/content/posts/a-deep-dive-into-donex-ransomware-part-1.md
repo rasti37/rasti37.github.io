@@ -1,11 +1,11 @@
 ---
-title: "A Deep Dive into Donex Ransomware (Part 1)"
+title: "A Deep Dive into Donex Ransomware [Part 1]"
 date: 2025-04-08T11:25:59+03:00
 slug: 2025-04-08-a-deep-dive-into-donex-ransomware-part-1
 type: posts
 draft: false
 katex: false
-summary: 'In this series of posts we dive into the internals of the Donex Ransomware. This series serves mostly as notes to keep track of my findings. I also record the entire analysis process and upload a series of videos on my YouTube channel. More info inside the post :)'
+summary: '[Part 1] In this series of posts we dive into the internals of the Donex Ransomware. This series serves mostly as notes to keep track of my findings. I also record the entire analysis process and upload a series of videos on my YouTube channel. More info inside the post :)'
 categories:
   - projects
   - malware-analysis
@@ -16,6 +16,8 @@ tags:
 ---
 
 {{< toc >}}
+
+[Here](https://rasti37.github.io/posts/2025-04-18-a-deep-dive-into-donex-ransomware-part-2) you can find part 2 of my Donex Ransomware Analysis blog post series.
 
 # Introduction
 
