@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<link rel="icon" type="image/x-icon" href="/thumb.png">
+	<style type=text/css>body{font-family:monospace;}</style>
+	<title>Deep Dive into WinRAR&#39;s Signature Scheme</title>
+	
+	
+	<link rel="stylesheet" href="/css/style.css">
+	
+	
+</head>
+<body>
+	<header>
+	::::::::::::::::::::::::::::<br>
+	:: <a href="http://localhost:1313/" class='header-footer-anchor'>rasti&#39;s knowledge cave</a> ::<br>
+	::::::::::::::::::::::::::::
+	<div style="float: right;">nothing fancy yet</div><br>
+	<p>
+	<nav>
+		<a href="/" class='header-footer-anchor'><b>Start</b></a> ·
+		
+		
+		
+		<a href="/posts/" class='header-footer-anchor'><b>Posts</b></a> · 
+		
+		<a href="/categories/" class='header-footer-anchor'><b>Categories</b></a> · 
+		
+		<a href="/tags/" class='header-footer-anchor'><b>Tags</b></a>
+		
+	</nav>
+	</p>
+	
+</header>
+	
+<main>
+	<article>
+		<h1>Deep Dive into WinRAR&#39;s Signature Scheme</h1>
+		<small>Created at: 08/03/2025, 22:52:50</small><br>
+		
+		
+		<br>.:
+		
+		
+		<a href="/tags/real-world" class='header-footer-anchor'>#real-world</a>, 
+		
+		<a href="/tags/sage" class='header-footer-anchor'>#sage</a>, 
+		
+		<a href="/tags/reverse-engineering" class='header-footer-anchor'>#reverse-engineering</a>
+		:.
+		<div>
+			<div style='cursor: pointer; border-radius: 3px; border:1px solid #888; padding: 7px; margin: 1.3em 0 1.3em 0;'>
+    <details>
+        <summary>Table of Contents</summary>
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#signature-scheme-overview">Signature Scheme Overview</a>
+      <ul>
+        <li><a href="#signature-generation-algorithm-overview">Signature Generation Algorithm Overview</a></li>
+        <li><a href="#signature-verification-algorithm-overview">Signature Verification Algorithm Overview</a>
+          <ul>
+            <li><a href="#proof-of-correctness">Proof of Correctness</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+    </details>
+</div>
+<h1 id="introduction">Introduction</h1>
+<p>Upon reverse engineering WinRAR to understand its internal workings and how the license key validation works, I discovered that all versions utilise a pretty ancient library for performing public key encryption and authentication — namely <a href="https://web.archive.org/web/19990117082016/http://ds.dial.pipex.com:80/george.barwood/v8/pegwit.htm" target="_blank" rel="noopener"><code>Pegwit (v8)</code></a>. Thankfully, its source code has now been uploaded to <a href="https://github.com/t-crest/patmos-benchmarks/tree/master/Mediabench/pegwit/src" target="_blank" rel="noopener">Github</a> so no need for the reader to hassle with a local copy.</p>
+<p>Pegwit implements Elliptic Curve Cryptography (ECC) over finite fields and uses a variant of the Nyberg-Rueppel signature scheme for signing and verifying data. During my reversing, I wasn&rsquo;t able to find any SageMath implementation (or python at all) of the WinRAR signature scheme so this is where the fun began. By the way, this post was my main source of inspiration and motivation for making my previous post about <a href="https://rasti37.github.io/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/" target="_blank" rel="noopener">Inverse Ring Homomorphisms</a>. We&rsquo;ll see how this is related shortly.</p>
+<p>In this post, we will dive into how WinRAR&rsquo;s signature scheme works and we will re-implement it in SageMath.</p>
+<h1 id="signature-scheme-overview">Signature Scheme Overview</h1>
+<p>Let $E$ be an elliptic curve with the following equation:</p>
+<p>$$
+E : y^2 + xy = x^3 + 161
+$$</p>
+<p>defined over the finite field $K = \text{GF}((2^{15})^{17})$. Using SageMath, we find the order of $E$ (more on how, later):</p>
+<p>$$
+q = 57896044618658097711785492504343953927113495037180187459668330685293304062220
+$$</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>sage: factor(<span style="color:#ae81ff">57896044618658097711785492504343953927113495037180187459668330685293304062220</span>)
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">3</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">5</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">541</span> <span style="color:#f92672">*</span> <span style="color:#ae81ff">1783611972232227286253403958852247502375646797202100661111162374777982257</span>
+</span></span></code></pre></div><p>It turns out that, the ECC arithmetic for WinRAR is done in the $n$-torsion subgroup of prime order:</p>
+<p>$$n = 1783611972232227286253403958852247502375646797202100661111162374777982257$$</p>
+<p>An $n$-torsion subgroup is simply a subgroup of the group $E(K)$ that contains all the points of order $n$.</p>
+<p>Let&rsquo;s define some notation first.</p>
+<ul>
+<li>$M$ &ndash; the message to be signed and $h = H(M)$ the hash digest of $M$. More on the internals of $H$ later.</li>
+<li>$x$ &ndash; the private key used to sign $M$.</li>
+<li>$(r, s)$ &ndash; the signature of $M$.</li>
+<li>$G$ &ndash; a fixed point of order $n$ defined in Pegwit.</li>
+<li>$P$ &ndash; the public key used to verify $(r,s)$ along with $M$. $P$ is computed as $x \cdot G$.</li>
+<li>$[A]_x$ &ndash; the x-coordinate of the point $A$.</li>
+</ul>
+<h2 id="signature-generation-algorithm-overview">Signature Generation Algorithm Overview</h2>
+<p>For each signature, a unique, $240$-bit nonce $k$ is generated and the signature is computed as:</p>
+<p>$$
+r = [k \cdot G]_x + h \pmod n\\
+s = k - r \cdot x \pmod n
+$$
+Final signature: $(r,s)$</p>
+<h2 id="signature-verification-algorithm-overview">Signature Verification Algorithm Overview</h2>
+<p>Given a signature $(r,s)$, the hash digest $h = H(M)$ and the public key $P = x \cdot G$, the equation for verification is shown below:</p>
+<p>$$r - [s \cdot G + r \cdot P]_x \stackrel{?}{=} h$$</p>
+<h3 id="proof-of-correctness">Proof of Correctness</h3>
+<p>Why does this equation verify the signature? Working with the left-hand side, our goal is to end up with $h$. That would mean that the equation holds.</p>
+<p>First, let&rsquo;s substitute $P$ with $x \cdot G$:</p>
+<p>$$r - [s \cdot G + r \cdot x \cdot G]_x = r - [(s + r \cdot x) \cdot G]_x$$</p>
+<p>Then, we substitute $s$:</p>
+<p>$$r - [(k - r \cdot x + r \cdot x) \cdot G]_x = r - [k \cdot G]_x$$</p>
+<p>Looking at how $r$ is defined, we know that:</p>
+<p>$$h = r - [k \cdot G]_x$$</p>
+<p>This concludes the proof.</p>
+
+		</div>
+	</article>
+</main>
+<aside>
+	<div>
+		<div>
+			<h3>RELATED POSTS</h3>
+		</div>
+		<div>
+			<ul>
+				
+				<li>2025-07-16 :: <a href="/posts/2025-07-16-v8-engine-version-detection/">V8 Engine Version Detection</a></li>
+				
+				<li>2025-04-18 :: <a href="/posts/2025-04-18-a-deep-dive-into-donex-ransomware-part-2/">A Deep Dive Into Donex Ransomware [Part 2]</a></li>
+				
+				<li>2025-04-08 :: <a href="/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/">A Deep Dive into Donex Ransomware [Part 1]</a></li>
+				
+				<li>2025-03-07 :: <a href="/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/">Computing Inverse Ring Homomorphisms (DIY)</a></li>
+				
+			</ul>
+		</div>
+	</div>
+</aside>
+
+
+	<footer>
+	<p>&copy; 2025 :: <a href="http://localhost:1313/"
+			class='header-footer-anchor'><b>rasti&#39;s knowledge cave</b></a> ·
+		
+		<a href="https://github.com/rasti37" class='header-footer-anchor' target='_blank'><b>Github</b></a>
+	</p>
+</footer>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
+  integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"
+  integrity="sha384-Rma6DA2IPUwhNxmrB/7S3Tno0YY7sFu9WSYMCuulLhIqYSGZ2gKCJWIqhBWqMQfh" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js"
+  integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"
+  onload="renderMathInElement(document.body);"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true }, 
+        { left: '$', right: '$', display: false }, 
+        { left: '\\(', right: '\\)', display: false }, 
+        { left: '\\[', right: '\\]', display: true }, 
+      ],
+      throwOnError: false
+    });
+  });
+</script>
+
+</body>
+</html>
