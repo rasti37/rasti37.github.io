@@ -1,9 +1,18 @@
 <!DOCTYPE html>
 <html lang="en-us">
-<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+<head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta property="og:title" content="Computing Inverse Ring Homomorphisms (DIY)">
+	<meta name="twitter:title" content="Computing Inverse Ring Homomorphisms (DIY)">
+	<meta name="description" content="">
+	<meta property="og:description" content="">
+	<meta name="twitter:description" content="">
+	<meta property="og:type" content="article">
+	<meta property="og:url" content="https://rasti37.github.io/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/">
+	<meta property="og:site_name" content="rasti&#39;s knowledge cave">
+	<meta name="twitter:card" content="summary_large_image">
 	<link rel="icon" type="image/x-icon" href="/thumb.png">
 	<style type=text/css>body{font-family:monospace;}</style>
 	<title>Computing Inverse Ring Homomorphisms (DIY)</title>
@@ -16,7 +25,7 @@
 <body>
 	<header>
 	::::::::::::::::::::::::::::<br>
-	:: <a href="http://localhost:1313/" class='header-footer-anchor'>rasti&#39;s knowledge cave</a> ::<br>
+	:: <a href="https://rasti37.github.io/" class='header-footer-anchor'>rasti&#39;s knowledge cave</a> ::<br>
 	::::::::::::::::::::::::::::
 	<div style="float: right;">nothing fancy yet</div><br>
 	<p>
@@ -93,7 +102,8 @@
 <p>My initial goal was to reimplement WinRAR&rsquo;s signature scheme in SageMath and I thought I was nearly done — until I hit the final boss. There&rsquo;s an entire blog post in the pipeline, entirely dedicated to how WinRAR signs and verifies data, so stay tuned :)</p>
 <p>Our current problem can be briefly stated as:</p>
 <blockquote>
-<p>SageMath doesn&rsquo;t provide a way to compute the inverse ring homomorphism when the domain is a quotient polynomial ring over some finite field and the codomain is a finite field of the same degree.</p></blockquote>
+<p>SageMath doesn&rsquo;t provide a way to compute the inverse ring homomorphism when the domain is a quotient polynomial ring over some finite field and the codomain is a finite field of the same degree.</p>
+</blockquote>
 <h1 id="mathematical-notation">Mathematical Notation</h1>
 <p>We will use the following notation:</p>
 <ul>
@@ -116,7 +126,8 @@
 <p>$$A = F_{2^2}[y]\ /\ (y^3+y+1)$$</p>
 <p>In natural language:</p>
 <blockquote>
-<p>$A$ is the set of degree-$2$ polynomials in $y$ with coefficients in $\mathbb{F}_{2^2}$. But hey, when you do operations with these polynomials, reduce the result modulo the irreducible polynomial $y^3+y+1$.</p></blockquote>
+<p>$A$ is the set of degree-$2$ polynomials in $y$ with coefficients in $\mathbb{F}_{2^2}$. But hey, when you do operations with these polynomials, reduce the result modulo the irreducible polynomial $y^3+y+1$.</p>
+</blockquote>
 <p>It&rsquo;s time for converting the nitty-gritty maths into code.</p>
 <h2 id="defining-the-parameters-in-sage">Defining the parameters in Sage</h2>
 <p>First, we define $\mathbb{F}_{2^2}$:</p>
@@ -179,7 +190,8 @@
 </span></span><span style="display:flex;"><span>(y <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> z <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>) <span style="color:#f92672">*</span> (y <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> z) <span style="color:#f92672">*</span> (y <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">5</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">4</span> <span style="color:#f92672">+</span> z<span style="color:#f92672">^</span><span style="color:#ae81ff">2</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>)
 </span></span></code></pre></div><p>From sage <a href="https://doc.sagemath.org/html/en/reference/polynomial_rings/sage/rings/polynomial/polynomial_element.html#sage.rings.polynomial.polynomial_element.Polynomial.any_root" target="_blank" rel="noopener">docs</a>:</p>
 <blockquote>
-<p>For finite fields, any_root() is non-deterministic when finding linear roots of a polynomial over the base ring.</p></blockquote>
+<p>For finite fields, any_root() is non-deterministic when finding linear roots of a polynomial over the base ring.</p>
+</blockquote>
 <p>Essentially, this provides way to determine the images of $Q$&rsquo;s generator $w$ in the codomain $\mathbb{F}_{64}$. Any of the following mappings would construct a valid homomorphism $f$:</p>
 <p>$$
 w \rightarrow z^4 + z^2 + z + 1\\
@@ -226,9 +238,11 @@ $$</p>
 </span></span></code></pre></div><p>But I&rsquo;m too convinced that these two fields are indeed isomorphic.</p>
 <p>&hellip; until &hellip;</p>
 <blockquote>
-<p>I assume just defining the inverse yourself?</p></blockquote>
+<p>I assume just defining the inverse yourself?</p>
+</blockquote>
 <blockquote>
-<p>but yeah you probably just want to define the inverse yourself</p></blockquote>
+<p>but yeah you probably just want to define the inverse yourself</p>
+</blockquote>
 <p>
 <figure>
   <img src="discord-interesting-project.png" alt="" />
@@ -450,13 +464,11 @@ $$</p>
 		<div>
 			<ul>
 				
-				<li>2025-07-16 :: <a href="/posts/2025-07-16-v8-engine-version-detection/">V8 Engine Version Detection</a></li>
-				
 				<li>2025-04-18 :: <a href="/posts/2025-04-18-a-deep-dive-into-donex-ransomware-part-2/">A Deep Dive Into Donex Ransomware [Part 2]</a></li>
 				
 				<li>2025-04-08 :: <a href="/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/">A Deep Dive into Donex Ransomware [Part 1]</a></li>
 				
-				<li>2025-03-08 :: <a href="/posts/2025-03-08-winrar-signature-scheme-analysis/">Deep Dive into WinRAR&#39;s Signature Scheme</a></li>
+				<li>2025-03-08 :: <a href="/posts/2025-03-08-winrar-license-verification-scheme-analysis/">Deep Dive into WinRAR License Verification Scheme</a></li>
 				
 			</ul>
 		</div>
@@ -465,7 +477,7 @@ $$</p>
 
 
 	<footer>
-	<p>&copy; 2025 :: <a href="http://localhost:1313/"
+	<p>&copy; 2025 :: <a href="https://rasti37.github.io/"
 			class='header-footer-anchor'><b>rasti&#39;s knowledge cave</b></a> ·
 		
 		<a href="https://github.com/rasti37" class='header-footer-anchor' target='_blank'><b>Github</b></a>

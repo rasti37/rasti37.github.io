@@ -2,24 +2,24 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Sage on rasti&#39;s knowledge cave</title>
-    <link>http://localhost:1313/tags/sage/</link>
+    <link>https://rasti37.github.io/tags/sage/</link>
     <description>Recent content in Sage on rasti&#39;s knowledge cave</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Sat, 08 Mar 2025 22:52:50 +0200</lastBuildDate>
-    <atom:link href="http://localhost:1313/tags/sage/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://rasti37.github.io/tags/sage/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Deep Dive into WinRAR&#39;s Signature Scheme</title>
-      <link>http://localhost:1313/posts/2025-03-08-winrar-signature-scheme-analysis/</link>
+      <title>Deep Dive into WinRAR License Verification Scheme</title>
+      <link>https://rasti37.github.io/posts/2025-03-08-winrar-license-verification-scheme-analysis/</link>
       <pubDate>Sat, 08 Mar 2025 22:52:50 +0200</pubDate>
-      <guid>http://localhost:1313/posts/2025-03-08-winrar-signature-scheme-analysis/</guid>
-      <description>This is test summary</description>
+      <guid>https://rasti37.github.io/posts/2025-03-08-winrar-license-verification-scheme-analysis/</guid>
+      <description>In this post I deep dive into analyzing the license verification scheme of the popular freeware WinRAR.</description>
     </item>
     <item>
       <title>Computing Inverse Ring Homomorphisms (DIY)</title>
-      <link>http://localhost:1313/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/</link>
+      <link>https://rasti37.github.io/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/</link>
       <pubDate>Fri, 07 Mar 2025 00:01:27 +0200</pubDate>
-      <guid>http://localhost:1313/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/</guid>
+      <guid>https://rasti37.github.io/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/</guid>
       <description>In this post, I provide a detailed explanation of how to manually define the inverse ring homomorphism in SageMath, mapping a quotient ring over a finite field to a finite extension field of the same characteristic.</description>
     </item>
   </channel>

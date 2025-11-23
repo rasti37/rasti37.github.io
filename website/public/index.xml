@@ -2,66 +2,59 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>rasti&#39;s knowledge cave</title>
-    <link>http://localhost:1313/</link>
+    <link>https://rasti37.github.io/</link>
     <description>Recent content on rasti&#39;s knowledge cave</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 16 Jul 2025 03:22:02 +0300</lastBuildDate>
-    <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>V8 Engine Version Detection</title>
-      <link>http://localhost:1313/posts/2025-07-16-v8-engine-version-detection/</link>
-      <pubDate>Wed, 16 Jul 2025 03:22:02 +0300</pubDate>
-      <guid>http://localhost:1313/posts/2025-07-16-v8-engine-version-detection/</guid>
-      <description>This is test summary</description>
-    </item>
+    <lastBuildDate>Fri, 18 Apr 2025 15:08:12 +0300</lastBuildDate>
+    <atom:link href="https://rasti37.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>A Deep Dive Into Donex Ransomware [Part 2]</title>
-      <link>http://localhost:1313/posts/2025-04-18-a-deep-dive-into-donex-ransomware-part-2/</link>
+      <link>https://rasti37.github.io/posts/2025-04-18-a-deep-dive-into-donex-ransomware-part-2/</link>
       <pubDate>Fri, 18 Apr 2025 15:08:12 +0300</pubDate>
-      <guid>http://localhost:1313/posts/2025-04-18-a-deep-dive-into-donex-ransomware-part-2/</guid>
+      <guid>https://rasti37.github.io/posts/2025-04-18-a-deep-dive-into-donex-ransomware-part-2/</guid>
       <description>[Part 2] In this series of posts we dive into the internals of the Donex Ransomware. This series serves mostly as notes to keep track of my findings. I also record the entire analysis process and upload a series of videos on my YouTube channel. More info inside the post :)</description>
     </item>
     <item>
       <title>A Deep Dive into Donex Ransomware [Part 1]</title>
-      <link>http://localhost:1313/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/</link>
+      <link>https://rasti37.github.io/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/</link>
       <pubDate>Tue, 08 Apr 2025 11:25:59 +0300</pubDate>
-      <guid>http://localhost:1313/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/</guid>
+      <guid>https://rasti37.github.io/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/</guid>
       <description>[Part 1] In this series of posts we dive into the internals of the Donex Ransomware. This series serves mostly as notes to keep track of my findings. I also record the entire analysis process and upload a series of videos on my YouTube channel. More info inside the post :)</description>
     </item>
     <item>
-      <title>Deep Dive into WinRAR&#39;s Signature Scheme</title>
-      <link>http://localhost:1313/posts/2025-03-08-winrar-signature-scheme-analysis/</link>
+      <title>Deep Dive into WinRAR License Verification Scheme</title>
+      <link>https://rasti37.github.io/posts/2025-03-08-winrar-license-verification-scheme-analysis/</link>
       <pubDate>Sat, 08 Mar 2025 22:52:50 +0200</pubDate>
-      <guid>http://localhost:1313/posts/2025-03-08-winrar-signature-scheme-analysis/</guid>
-      <description>This is test summary</description>
+      <guid>https://rasti37.github.io/posts/2025-03-08-winrar-license-verification-scheme-analysis/</guid>
+      <description>In this post I deep dive into analyzing the license verification scheme of the popular freeware WinRAR.</description>
     </item>
     <item>
       <title>Computing Inverse Ring Homomorphisms (DIY)</title>
-      <link>http://localhost:1313/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/</link>
+      <link>https://rasti37.github.io/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/</link>
       <pubDate>Fri, 07 Mar 2025 00:01:27 +0200</pubDate>
-      <guid>http://localhost:1313/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/</guid>
+      <guid>https://rasti37.github.io/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/</guid>
       <description>In this post, I provide a detailed explanation of how to manually define the inverse ring homomorphism in SageMath, mapping a quotient ring over a finite field to a finite extension field of the same characteristic.</description>
     </item>
     <item>
       <title>(Crypto) TSJ CTF 2022 - babyRSA</title>
-      <link>http://localhost:1313/posts/2025-03-06-tsj-ctf-2022-babyrsa/</link>
+      <link>https://rasti37.github.io/posts/2025-03-06-tsj-ctf-2022-babyrsa/</link>
       <pubDate>Thu, 06 Mar 2025 23:26:11 +0200</pubDate>
-      <guid>http://localhost:1313/posts/2025-03-06-tsj-ctf-2022-babyrsa/</guid>
+      <guid>https://rasti37.github.io/posts/2025-03-06-tsj-ctf-2022-babyrsa/</guid>
       <description>One of the first challenges I had solved, back in 2022. This one taught me about resultants, coppersmith&amp;rsquo;s small roots and how to work with curves defined over a ring instead of a finite field.</description>
     </item>
     <item>
       <title>(Crypto) LITCTF 2023 - LCG... Squared?</title>
-      <link>http://localhost:1313/posts/2025-03-02-litctf-2023-lcg-squared/</link>
+      <link>https://rasti37.github.io/posts/2025-03-02-litctf-2023-lcg-squared/</link>
       <pubDate>Sun, 02 Mar 2025 03:31:49 +0200</pubDate>
-      <guid>http://localhost:1313/posts/2025-03-02-litctf-2023-lcg-squared/</guid>
+      <guid>https://rasti37.github.io/posts/2025-03-02-litctf-2023-lcg-squared/</guid>
       <description>This was a challenge I enjoyed solving in LITCTF 2023. I considered it a good introduction to variable elimination techniques, such as Groebner Basis and resultants.</description>
     </item>
     <item>
       <title>(Crypto) Backdoor CTF 2024 - Hashing Frenzy</title>
-      <link>http://localhost:1313/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</link>
+      <link>https://rasti37.github.io/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</link>
       <pubDate>Sat, 01 Mar 2025 04:16:04 +0200</pubDate>
-      <guid>http://localhost:1313/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</guid>
+      <guid>https://rasti37.github.io/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</guid>
       <description>Hashing Frenzy was a cool challenge related to problem solving via lattice reduction techniques. My goal is to showcase some of the intuition required to translate linear equations to instances of lattice problems.</description>
     </item>
   </channel>
