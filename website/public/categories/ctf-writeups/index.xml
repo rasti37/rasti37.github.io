@@ -2,31 +2,31 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Ctf-Writeups on rasti&#39;s knowledge cave</title>
-    <link>https://rasti37.github.io/categories/ctf-writeups/</link>
+    <link>http://localhost:1313/categories/ctf-writeups/</link>
     <description>Recent content in Ctf-Writeups on rasti&#39;s knowledge cave</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 06 Mar 2025 23:26:11 +0200</lastBuildDate>
-    <atom:link href="https://rasti37.github.io/categories/ctf-writeups/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/categories/ctf-writeups/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>(Crypto) TSJ CTF 2022 - babyRSA</title>
-      <link>https://rasti37.github.io/posts/2025-03-06-tsj-ctf-2022-babyrsa/</link>
+      <link>http://localhost:1313/posts/2025-03-06-tsj-ctf-2022-babyrsa/</link>
       <pubDate>Thu, 06 Mar 2025 23:26:11 +0200</pubDate>
-      <guid>https://rasti37.github.io/posts/2025-03-06-tsj-ctf-2022-babyrsa/</guid>
+      <guid>http://localhost:1313/posts/2025-03-06-tsj-ctf-2022-babyrsa/</guid>
       <description>One of the first challenges I had solved, back in 2022. This one taught me about resultants, coppersmith&amp;rsquo;s small roots and how to work with curves defined over a ring instead of a finite field.</description>
     </item>
     <item>
       <title>(Crypto) LITCTF 2023 - LCG... Squared?</title>
-      <link>https://rasti37.github.io/posts/2025-03-02-litctf-2023-lcg-squared/</link>
+      <link>http://localhost:1313/posts/2025-03-02-litctf-2023-lcg-squared/</link>
       <pubDate>Sun, 02 Mar 2025 03:31:49 +0200</pubDate>
-      <guid>https://rasti37.github.io/posts/2025-03-02-litctf-2023-lcg-squared/</guid>
+      <guid>http://localhost:1313/posts/2025-03-02-litctf-2023-lcg-squared/</guid>
       <description>This was a challenge I enjoyed solving in LITCTF 2023. I considered it a good introduction to variable elimination techniques, such as Groebner Basis and resultants.</description>
     </item>
     <item>
       <title>(Crypto) Backdoor CTF 2024 - Hashing Frenzy</title>
-      <link>https://rasti37.github.io/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</link>
+      <link>http://localhost:1313/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</link>
       <pubDate>Sat, 01 Mar 2025 04:16:04 +0200</pubDate>
-      <guid>https://rasti37.github.io/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</guid>
+      <guid>http://localhost:1313/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</guid>
       <description>Hashing Frenzy was a cool challenge related to problem solving via lattice reduction techniques. My goal is to showcase some of the intuition required to translate linear equations to instances of lattice problems.</description>
     </item>
   </channel>

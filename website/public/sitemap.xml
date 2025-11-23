@@ -2,67 +2,67 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://rasti37.github.io/posts/</loc>
+    <loc>http://localhost:1313/posts/</loc>
     <lastmod>2025-07-16T03:22:02+03:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/</loc>
+    <loc>http://localhost:1313/</loc>
     <lastmod>2025-07-16T03:22:02+03:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/posts/2025-04-18-a-deep-dive-into-donex-ransomware-part-2/</loc>
+    <loc>http://localhost:1313/posts/2025-04-18-a-deep-dive-into-donex-ransomware-part-2/</loc>
     <lastmod>2025-04-18T15:08:12+03:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/categories/</loc>
+    <loc>http://localhost:1313/categories/</loc>
     <lastmod>2025-04-18T15:08:12+03:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/categories/malware-analysis/</loc>
+    <loc>http://localhost:1313/categories/malware-analysis/</loc>
     <lastmod>2025-04-18T15:08:12+03:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/tags/malware-analysis/</loc>
+    <loc>http://localhost:1313/tags/malware-analysis/</loc>
     <lastmod>2025-04-18T15:08:12+03:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/categories/projects/</loc>
+    <loc>http://localhost:1313/categories/projects/</loc>
     <lastmod>2025-04-18T15:08:12+03:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/tags/real-world/</loc>
+    <loc>http://localhost:1313/tags/real-world/</loc>
     <lastmod>2025-04-18T15:08:12+03:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/tags/reverse-engineering/</loc>
+    <loc>http://localhost:1313/tags/reverse-engineering/</loc>
     <lastmod>2025-04-18T15:08:12+03:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/tags/</loc>
+    <loc>http://localhost:1313/tags/</loc>
     <lastmod>2025-04-18T15:08:12+03:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/</loc>
+    <loc>http://localhost:1313/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/</loc>
     <lastmod>2025-04-08T11:25:59+03:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/tags/crypto/</loc>
+    <loc>http://localhost:1313/tags/crypto/</loc>
     <lastmod>2025-03-08T22:52:50+02:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/posts/2025-03-08-winrar-license-verification-scheme-analysis/</loc>
+    <loc>http://localhost:1313/posts/2025-03-08-winrar-license-verification-scheme-analysis/</loc>
     <lastmod>2025-03-08T22:52:50+02:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/tags/sage/</loc>
+    <loc>http://localhost:1313/tags/sage/</loc>
     <lastmod>2025-03-08T22:52:50+02:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/</loc>
+    <loc>http://localhost:1313/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/</loc>
     <lastmod>2025-03-07T00:01:27+02:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/posts/2025-03-06-tsj-ctf-2022-babyrsa/</loc>
+    <loc>http://localhost:1313/posts/2025-03-06-tsj-ctf-2022-babyrsa/</loc>
     <lastmod>2025-03-06T23:26:11+02:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/categories/ctf-writeups/</loc>
+    <loc>http://localhost:1313/categories/ctf-writeups/</loc>
     <lastmod>2025-03-06T23:26:11+02:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/tags/ctf-writeups/</loc>
+    <loc>http://localhost:1313/tags/ctf-writeups/</loc>
     <lastmod>2025-03-06T23:26:11+02:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/posts/2025-03-02-litctf-2023-lcg-squared/</loc>
+    <loc>http://localhost:1313/posts/2025-03-02-litctf-2023-lcg-squared/</loc>
     <lastmod>2025-03-02T03:31:49+02:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</loc>
+    <loc>http://localhost:1313/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/</loc>
     <lastmod>2025-03-01T04:16:04+02:00</lastmod>
   </url><url>
-    <loc>https://rasti37.github.io/tags/lll/</loc>
+    <loc>http://localhost:1313/tags/lll/</loc>
     <lastmod>2025-03-01T04:16:04+02:00</lastmod>
   </url>
 </urlset>

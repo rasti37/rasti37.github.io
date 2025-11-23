@@ -2,59 +2,59 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Tags on rasti&#39;s knowledge cave</title>
-    <link>https://rasti37.github.io/tags/</link>
+    <link>http://localhost:1313/tags/</link>
     <description>Recent content in Tags on rasti&#39;s knowledge cave</description>
     <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Fri, 18 Apr 2025 15:08:12 +0300</lastBuildDate>
-    <atom:link href="https://rasti37.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Malware-Analysis</title>
-      <link>https://rasti37.github.io/tags/malware-analysis/</link>
+      <link>http://localhost:1313/tags/malware-analysis/</link>
       <pubDate>Fri, 18 Apr 2025 15:08:12 +0300</pubDate>
-      <guid>https://rasti37.github.io/tags/malware-analysis/</guid>
+      <guid>http://localhost:1313/tags/malware-analysis/</guid>
       <description></description>
     </item>
     <item>
       <title>Real-World</title>
-      <link>https://rasti37.github.io/tags/real-world/</link>
+      <link>http://localhost:1313/tags/real-world/</link>
       <pubDate>Fri, 18 Apr 2025 15:08:12 +0300</pubDate>
-      <guid>https://rasti37.github.io/tags/real-world/</guid>
+      <guid>http://localhost:1313/tags/real-world/</guid>
       <description></description>
     </item>
     <item>
       <title>Reverse-Engineering</title>
-      <link>https://rasti37.github.io/tags/reverse-engineering/</link>
+      <link>http://localhost:1313/tags/reverse-engineering/</link>
       <pubDate>Fri, 18 Apr 2025 15:08:12 +0300</pubDate>
-      <guid>https://rasti37.github.io/tags/reverse-engineering/</guid>
+      <guid>http://localhost:1313/tags/reverse-engineering/</guid>
       <description></description>
     </item>
     <item>
       <title>Crypto</title>
-      <link>https://rasti37.github.io/tags/crypto/</link>
+      <link>http://localhost:1313/tags/crypto/</link>
       <pubDate>Sat, 08 Mar 2025 22:52:50 +0200</pubDate>
-      <guid>https://rasti37.github.io/tags/crypto/</guid>
+      <guid>http://localhost:1313/tags/crypto/</guid>
       <description></description>
     </item>
     <item>
       <title>Sage</title>
-      <link>https://rasti37.github.io/tags/sage/</link>
+      <link>http://localhost:1313/tags/sage/</link>
       <pubDate>Sat, 08 Mar 2025 22:52:50 +0200</pubDate>
-      <guid>https://rasti37.github.io/tags/sage/</guid>
+      <guid>http://localhost:1313/tags/sage/</guid>
       <description></description>
     </item>
     <item>
       <title>Ctf-Writeups</title>
-      <link>https://rasti37.github.io/tags/ctf-writeups/</link>
+      <link>http://localhost:1313/tags/ctf-writeups/</link>
       <pubDate>Thu, 06 Mar 2025 23:26:11 +0200</pubDate>
-      <guid>https://rasti37.github.io/tags/ctf-writeups/</guid>
+      <guid>http://localhost:1313/tags/ctf-writeups/</guid>
       <description></description>
     </item>
     <item>
       <title>LLL</title>
-      <link>https://rasti37.github.io/tags/lll/</link>
+      <link>http://localhost:1313/tags/lll/</link>
       <pubDate>Sat, 01 Mar 2025 04:16:04 +0200</pubDate>
-      <guid>https://rasti37.github.io/tags/lll/</guid>
+      <guid>http://localhost:1313/tags/lll/</guid>
       <description></description>
     </item>
   </channel>
