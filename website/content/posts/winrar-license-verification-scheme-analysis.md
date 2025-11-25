@@ -676,8 +676,10 @@ Gi = (0x56fdcbc6a27acee0cc2996e0096ae74feb1acf220a2341b898b549440297b8cc, 0x20da
 
 # next lines convert the integers to gf points
 Gp = (Gi[0].digits(base=2^15), Gi[1].digits(base=2^15) )
+# write Gx, Gy in polynomial form
 Gx = sum(F1.from_integer(a) * u**i for i, a in enumerate(Gp[0]))
 Gy = sum(F1.from_integer(a) * u**i for i, a in enumerate(Gp[1]))
+# Gx, Gy are now elements of the extension field GF((2^{15})^{17})
 
 assert E.is_on_curve(Gx, Gy)
 ```

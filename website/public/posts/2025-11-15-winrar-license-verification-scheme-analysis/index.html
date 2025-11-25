@@ -626,8 +626,10 @@ Final signature: $(r,s)$</p>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e"># next lines convert the integers to gf points</span>
 </span></span><span style="display:flex;"><span>Gp <span style="color:#f92672">=</span> (Gi[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">.</span>digits(base<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">15</span>), Gi[<span style="color:#ae81ff">1</span>]<span style="color:#f92672">.</span>digits(base<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span><span style="color:#f92672">^</span><span style="color:#ae81ff">15</span>) )
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># write Gx, Gy in polynomial form</span>
 </span></span><span style="display:flex;"><span>Gx <span style="color:#f92672">=</span> sum(F1<span style="color:#f92672">.</span>from_integer(a) <span style="color:#f92672">*</span> u<span style="color:#f92672">**</span>i <span style="color:#66d9ef">for</span> i, a <span style="color:#f92672">in</span> enumerate(Gp[<span style="color:#ae81ff">0</span>]))
 </span></span><span style="display:flex;"><span>Gy <span style="color:#f92672">=</span> sum(F1<span style="color:#f92672">.</span>from_integer(a) <span style="color:#f92672">*</span> u<span style="color:#f92672">**</span>i <span style="color:#66d9ef">for</span> i, a <span style="color:#f92672">in</span> enumerate(Gp[<span style="color:#ae81ff">1</span>]))
+</span></span><span style="display:flex;"><span><span style="color:#75715e"># Gx, Gy are now elements of the extension field GF((2^{15})^{17})</span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">assert</span> E<span style="color:#f92672">.</span>is_on_curve(Gx, Gy)
 </span></span></code></pre></div><h3 id="second-try">Second try</h3>
