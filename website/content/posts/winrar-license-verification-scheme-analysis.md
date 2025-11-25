@@ -758,7 +758,7 @@ $G_x, G_y$ are polynomials in $\text{ybar}$ with the coefficients being polynomi
 
 <img src="reaction.gif" style="width:60%" />
 
-This is exactly when I realized that these two fields, i.e. $GF(2^{255})$ and $GF(15^{17})$, *MUST* be isomorphic and this is how the post about manual inverse homomorphisms was born. For more details, you can refer that [post](https://rasti37.github.io/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/). For now, trust me bro, we need to slightly modify the implementations of `int2gfPoint` and `gfPoint2Int`. The former should apply the $f$ homomorphism, and the latter should apply its inverse $f^{-1}$:
+This is exactly when I realized that these two fields, i.e. $GF(2^{255})$ and $GF(15^{17})$, *MUST* be isomorphic and this is how the post about manual inverse homomorphisms was born. For more details, you can refer that [post](https://rasti37.github.io/posts/2025-03-07-computing-inverse-ring-homomorphisms-diy/). For now, and take my word for this, we need to slightly modify the implementations of `int2gfPoint` and `gfPoint2Int`. The former should apply the $f$ homomorphism, and the latter should apply its inverse $f^{-1}$:
 
 ```python
 IP = y**17 + y**3 + 1
