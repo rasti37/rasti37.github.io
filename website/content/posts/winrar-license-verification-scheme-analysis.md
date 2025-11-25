@@ -1,8 +1,8 @@
 ---
 title: "Deep Dive into WinRAR License Verification Scheme"
 description: "In this post I deep dive into analyzing the license verification scheme of the popular freeware WinRAR."
-date: 2025-03-08T22:52:50+02:00
-slug: 2025-03-08-winrar-license-verification-scheme-analysis
+date: 2025-11-15T22:52:50+02:00
+slug: 2025-11-15-winrar-license-verification-scheme-analysis
 type: posts
 draft: false
 katex: true
@@ -84,7 +84,7 @@ Then, we substitute $s$:
 
 $$r - [(k - r \cdot x + r \cdot x) \cdot G]_x = r - [k \cdot G]_x$$
 
-Looking at how $r$ is defined in , we know that:
+Looking at how $r$ is defined in (1), we know that:
 
 $$h = r - [k \cdot G]_x$$
 
@@ -299,7 +299,7 @@ hashes our raw data and the final hash overwrites the state indices $[6,\ \cdots
 hash_final(HashContext, p->state + 6);
 ```
 
-Here comes the tricky part. There appears to be a discrepancy between Pegwit's source and WinRAR's decompilation, which initially confused me and made it difficult for me to grasp what was going on. Just like that, I ended upspending several hours debugging in x64dbg🙂. In hindsight, this was probably a static-analysis skill issue on my part as I don't believe that the library itself is buggy — but hey, when static analysis fails, you gain more debugging experience (and lose a bit of hair) which is always really fun!
+Here comes the tricky part. There appears to be a discrepancy between Pegwit's source and WinRAR's decompilation, which initially confused me and made it difficult for me to grasp what was going on. Just like that, I ended up spending several hours debugging in x64dbg🙂. In hindsight, this was probably a static-analysis skill issue on my part as I don't believe that the library itself is buggy — but hey, when static analysis fails, you gain more debugging experience (and lose a bit of hair) which is always really fun!
 
 It turns out that shit happens with the first call to `hash_process`:
 
@@ -817,7 +817,8 @@ from scheme import NybergRueppelScheme
 
 seed = '336606507e63ec734eb7b6f75bd6be1230aa223f0d3dc42c06'
 scheme = NybergRueppelScheme(seed)
-r, s = scheme.sign(b'r4sti7a4305372c7833238fdea689fd4c85e7a58864a691b3d2071e795feb60222311')
+data = b'r4sti7a4305372c7833238fdea689fd4c85e7a58864a691b3d2071e795feb60222311'
+r, s = scheme.sign(data)
 assert (r, s) == (0x0dbc977ee85e88a1379778a5461676e6b48818e95accc458a4f70488d85c, 0x67bd89ef91e0b03f90f73331d4bc649dbd14fe05a099616ade42a3b2a6c3)
 print('[+] thanks for reading :-)')
 ```

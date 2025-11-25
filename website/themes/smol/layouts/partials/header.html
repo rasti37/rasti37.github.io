@@ -1,9 +1,8 @@
 <header>
-	{{ strings.Repeat ( .Site.Title | len | add 6 ) ":" }}<br>
-	:: <a href="{{ .Site.BaseURL }}" class='header-footer-anchor'>{{ .Site.Title }}</a> ::<br>
-	{{ strings.Repeat ( .Site.Title | len | add 6 ) ":" }}
+	{{ strings.Repeat ( .Site.Title | len | add 6 ) "#" }}<br>
+	## <a href="{{ .Site.BaseURL }}" class='header-footer-anchor'>{{ .Site.Title }}</a> ##<br>
+	{{ strings.Repeat ( .Site.Title | len | add 6 ) "#" }}
 	<div style="float: right;">{{ .Site.Params.subtitle }}</div><br>
-	<p>
 	<nav>
 		<a href="/" class='header-footer-anchor'><b>Start</b></a> ·
 		{{ $l := sub (len .Site.Menus.main) 1 }}
@@ -12,6 +11,6 @@
 		<a href="{{ .URL | relURL }}" class='header-footer-anchor'><b>{{ .Name }}</b></a>{{ if ne $index $l }} · {{ end }}
 		{{ end }}
 	</nav>
-	</p>
+	<!-- <p> -->
 	{{ end }}
 </header>

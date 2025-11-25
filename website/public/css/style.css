@@ -35,9 +35,9 @@ html {
 }
 
 body {
-    max-width: 800px;
+    max-width: 60%;
     margin: 40px auto;
-    padding: 0 10px;
+    /* padding: 0 10px; */
     font: var(--fontsize)/1.5 monospace;
     color: var(--fontcolor);
     background: var(--bgcolor);
@@ -45,7 +45,7 @@ body {
 
 a {
     color: var(--mainlinkcolor) !important;
-    /* text-decoration: none; */
+    text-decoration: none;
 }
 
 a:hover {
@@ -73,17 +73,17 @@ h3 {
 }
 
 h1:has(a) {
-    text-shadow: var(--outlinecolor) 1px 0 5px !important;
+    text-shadow: var(--outlinecolor) 0 0 3px !important;
 }
 
 h1:not(:has(a)),
 h2:not(:has(a)),
 h3:not(:has(a)),
 h4:not(:has(a)) {
-    text-shadow: 1px 1px 11px var(--outlinecolor), 0 0 2px var(--outlinecolor), 0 0 3px var(--outlinecolor) !important;
+    text-shadow: 1px 1px 8px var(--outlinecolor), 0 0 7px var(--outlinecolor), 0 0 7px var(--outlinecolor) !important;
 }
 
-p>code {
+p > code {
     color: var(--precolor);
     background: var(--prebgcolor);
 }

@@ -25,11 +25,10 @@
 </head>
 <body>
 	<header>
-	::::::::::::::::::::::::::::<br>
-	:: <a href="http://localhost:1313/" class='header-footer-anchor'>rasti&#39;s knowledge cave</a> ::<br>
-	::::::::::::::::::::::::::::
-	<div style="float: right;">nothing fancy yet</div><br>
-	<p>
+	############################<br>
+	## <a href="http://localhost:1313/" class='header-footer-anchor'>rasti&#39;s knowledge cave</a> ##<br>
+	############################
+	<div style="float: right;">gatekeeping is for the weak</div><br>
 	<nav>
 		<a href="/" class='header-footer-anchor'><b>Start</b></a> ·
 		
@@ -42,7 +41,7 @@
 		<a href="/tags/" class='header-footer-anchor'><b>Tags</b></a>
 		
 	</nav>
-	</p>
+	
 	
 </header>
 	
@@ -145,7 +144,7 @@
 </span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Util.number <span style="color:#f92672">import</span> getPrime
 </span></span><span style="display:flex;"><span>p <span style="color:#f92672">=</span> getPrime(<span style="color:#ae81ff">64</span>)
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg1</span>:
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, n<span style="color:#f92672">=</span><span style="color:#ae81ff">64</span>):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, n<span style="color:#f92672">=</span><span style="color:#ae81ff">64</span>):
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>a <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
@@ -156,7 +155,7 @@
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> ret
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg2</span>:
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, n<span style="color:#f92672">=</span><span style="color:#ae81ff">64</span>):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, n<span style="color:#f92672">=</span><span style="color:#ae81ff">64</span>):
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>lcg <span style="color:#f92672">=</span> lcg1(n)
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
@@ -210,7 +209,7 @@
 </span></span></code></pre></div><p>Assuming AES is secure, the only way to decrypt the ciphertext is to retrieve the encryption key, which means we have to recover $r$ - the sixth output of the RNG. As we don&rsquo;t have many information, we should probably focus on these five outputs.</p>
 <h2 id="analyzing-the-lcg-classes">Analyzing the LCG classes</h2>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg1</span>:
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, n<span style="color:#f92672">=</span><span style="color:#ae81ff">64</span>):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, n<span style="color:#f92672">=</span><span style="color:#ae81ff">64</span>):
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>a <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
@@ -221,7 +220,7 @@
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> ret
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg2</span>:
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, n<span style="color:#f92672">=</span><span style="color:#ae81ff">64</span>):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, n<span style="color:#f92672">=</span><span style="color:#ae81ff">64</span>):
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>lcg <span style="color:#f92672">=</span> lcg1(n)
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> random<span style="color:#f92672">.</span>randint(<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span><span style="color:#f92672">**</span>n)
@@ -258,7 +257,7 @@ $$</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>PR<span style="color:#f92672">.&lt;</span>x0,y0,a1,b1,b2<span style="color:#f92672">&gt;</span> <span style="color:#f92672">=</span> PolynomialRing(GF(p))
 </span></span></code></pre></div><p>Next, we slightly modify the classes so that no random numbers are generated in the constructors, but instead, the five variables are passed as arguments.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg1</span>:
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, x, a, b1):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, x, a, b1):
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>a <span style="color:#f92672">=</span> a
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> b1
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> x
@@ -269,7 +268,7 @@ $$</p>
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> ret
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg2</span>:
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, x, y, a, b1, b2):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, x, y, a, b1, b2):
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>lcg <span style="color:#f92672">=</span> lcg1(x, a, b1)
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> y
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> b2
@@ -370,7 +369,7 @@ b1 + 9662372171659581811*b2 + 10180096875606879244
 </span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Util.Padding <span style="color:#f92672">import</span> pad, unpad
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg1</span>:
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, x, a, b1):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, x, a, b1):
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>a <span style="color:#f92672">=</span> a
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> b1
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> x
@@ -381,7 +380,7 @@ b1 + 9662372171659581811*b2 + 10180096875606879244
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> ret
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">lcg2</span>:
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> <span style="color:#a6e22e">__init__</span>(self, x, y, a, b1, b2):
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">def</span> __init__(self, x, y, a, b1, b2):
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>lcg <span style="color:#f92672">=</span> lcg1(x, a, b1)
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>x <span style="color:#f92672">=</span> y
 </span></span><span style="display:flex;"><span>        self<span style="color:#f92672">.</span>b <span style="color:#f92672">=</span> b2

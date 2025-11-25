@@ -6,41 +6,41 @@
     <description>Recent content in Tags on rasti&#39;s knowledge cave</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 18 Apr 2025 15:08:12 +0300</lastBuildDate>
+    <lastBuildDate>Sat, 15 Nov 2025 22:52:50 +0200</lastBuildDate>
     <atom:link href="http://localhost:1313/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Malware-Analysis</title>
-      <link>http://localhost:1313/tags/malware-analysis/</link>
-      <pubDate>Fri, 18 Apr 2025 15:08:12 +0300</pubDate>
-      <guid>http://localhost:1313/tags/malware-analysis/</guid>
+      <title>Crypto</title>
+      <link>http://localhost:1313/tags/crypto/</link>
+      <pubDate>Sat, 15 Nov 2025 22:52:50 +0200</pubDate>
+      <guid>http://localhost:1313/tags/crypto/</guid>
       <description></description>
     </item>
     <item>
       <title>Real-World</title>
       <link>http://localhost:1313/tags/real-world/</link>
-      <pubDate>Fri, 18 Apr 2025 15:08:12 +0300</pubDate>
+      <pubDate>Sat, 15 Nov 2025 22:52:50 +0200</pubDate>
       <guid>http://localhost:1313/tags/real-world/</guid>
       <description></description>
     </item>
     <item>
       <title>Reverse-Engineering</title>
       <link>http://localhost:1313/tags/reverse-engineering/</link>
-      <pubDate>Fri, 18 Apr 2025 15:08:12 +0300</pubDate>
+      <pubDate>Sat, 15 Nov 2025 22:52:50 +0200</pubDate>
       <guid>http://localhost:1313/tags/reverse-engineering/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>Crypto</title>
-      <link>http://localhost:1313/tags/crypto/</link>
-      <pubDate>Sat, 08 Mar 2025 22:52:50 +0200</pubDate>
-      <guid>http://localhost:1313/tags/crypto/</guid>
       <description></description>
     </item>
     <item>
       <title>Sage</title>
       <link>http://localhost:1313/tags/sage/</link>
-      <pubDate>Sat, 08 Mar 2025 22:52:50 +0200</pubDate>
+      <pubDate>Sat, 15 Nov 2025 22:52:50 +0200</pubDate>
       <guid>http://localhost:1313/tags/sage/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Malware-Analysis</title>
+      <link>http://localhost:1313/tags/malware-analysis/</link>
+      <pubDate>Fri, 18 Apr 2025 15:08:12 +0300</pubDate>
+      <guid>http://localhost:1313/tags/malware-analysis/</guid>
       <description></description>
     </item>
     <item>

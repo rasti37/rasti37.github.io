@@ -6,8 +6,15 @@
     <description>Recent content in Reverse-Engineering on rasti&#39;s knowledge cave</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 18 Apr 2025 15:08:12 +0300</lastBuildDate>
+    <lastBuildDate>Sat, 15 Nov 2025 22:52:50 +0200</lastBuildDate>
     <atom:link href="http://localhost:1313/tags/reverse-engineering/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Deep Dive into WinRAR License Verification Scheme</title>
+      <link>http://localhost:1313/posts/2025-11-15-winrar-license-verification-scheme-analysis/</link>
+      <pubDate>Sat, 15 Nov 2025 22:52:50 +0200</pubDate>
+      <guid>http://localhost:1313/posts/2025-11-15-winrar-license-verification-scheme-analysis/</guid>
+      <description>In this post I deep dive into analyzing the license verification scheme of the popular freeware WinRAR.</description>
+    </item>
     <item>
       <title>A Deep Dive Into Donex Ransomware [Part 2]</title>
       <link>http://localhost:1313/posts/2025-04-18-a-deep-dive-into-donex-ransomware-part-2/</link>
@@ -21,13 +28,6 @@
       <pubDate>Tue, 08 Apr 2025 11:25:59 +0300</pubDate>
       <guid>http://localhost:1313/posts/2025-04-08-a-deep-dive-into-donex-ransomware-part-1/</guid>
       <description>[Part 1] In this series of posts we dive into the internals of the Donex Ransomware. This series serves mostly as notes to keep track of my findings. I also record the entire analysis process and upload a series of videos on my YouTube channel. More info inside the post :)</description>
-    </item>
-    <item>
-      <title>Deep Dive into WinRAR License Verification Scheme</title>
-      <link>http://localhost:1313/posts/2025-03-08-winrar-license-verification-scheme-analysis/</link>
-      <pubDate>Sat, 08 Mar 2025 22:52:50 +0200</pubDate>
-      <guid>http://localhost:1313/posts/2025-03-08-winrar-license-verification-scheme-analysis/</guid>
-      <description>In this post I deep dive into analyzing the license verification scheme of the popular freeware WinRAR.</description>
     </item>
   </channel>
 </rss>
