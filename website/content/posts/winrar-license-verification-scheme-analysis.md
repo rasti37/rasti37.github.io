@@ -285,7 +285,7 @@ typedef struct /* Whole structure will be hashed */
 
 It should be obvious until now that the PRNG and the data hashing are closely related. The PRNG state consists of 17 dwords and the final hash $h = H(M)$ is derived from the PRNG as follows:
 
-<img src="prng-state-hash.png" style="width:80%" />
+<img src="prng-state-hash.svg" style="width:80%" />
 
 Now we have everything we know to define mathematically how the final hash is computed. The call to `hash_process`:
 

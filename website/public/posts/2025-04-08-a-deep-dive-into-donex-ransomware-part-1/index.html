@@ -185,7 +185,8 @@
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><p>Definition from <a href="https://en.wikipedia.org/wiki/WoW64" target="_blank" rel="noopener">Wikipedia</a>:</p>
 <blockquote>
-<p>WoW64 (Windows 32-bit on Windows 64-bit) is a subsystem of the Windows operating system capable of running 32-bit applications on 64-bit Windows.</p></blockquote>
+<p>WoW64 (Windows 32-bit on Windows 64-bit) is a subsystem of the Windows operating system capable of running 32-bit applications on 64-bit Windows.</p>
+</blockquote>
 <p>In other words, <code>WoW64</code> is the reason why we can run 32-bit applications (such as this ransomware) in 64-bit Windows systems.</p>
 <p>But what is file system redirection?</p>
 <p>By default, WoW64 transparently redirects all the system calls made by 32-bit applications to the system folder <code>C:\Windows\SysWoW64</code> which contains 32-bit libraries and executables.</p>
