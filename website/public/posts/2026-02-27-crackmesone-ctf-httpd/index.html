@@ -247,7 +247,11 @@
 
 </p>
 <p>It looks like a valid Ethernet frame requires a minimum payload of 46 bytes. Consider the Ethernet frame as the outer peel of any network packet (TCP/UDP/HTTP/IP/ICMP and so on) out there. It encapsulates the entire packet, just like the outer onion peel encapsulates the inner ones.</p>
-<p>Packet = Ethernet Frame = Ethernet Header + Ethernet Payload = Ethernet Header + (IPv4 Packet) = Ethernet Header + (IPv4 Header + IPv4 Payload) = Ethernet Header + (IPv4 Header + ICMP packet).</p>
+<p>Packet = Ethernet Frame</p>
+<p>Packet = Ethernet Header + Ethernet Payload</p>
+<p>Packet = Ethernet Header + IPv4 Packet</p>
+<p>Packet = Ethernet Header + IPv4 Header + IPv4 Payload</p>
+<p>Packet = Ethernet Header + IPv4 Header + ICMP packet</p>
 <h1 id="icmp-packet-format">ICMP Packet Format</h1>
 <p>Let&rsquo;s analyze a dummy ICMP packet captured in Wireshark. I pinged <code>8.8.8.8</code> and got the following Ethernet frame in hex:</p>
 <pre tabindex="0"><code>0000 a0 95 7f 4e 25 50 08 60 6e d5 8b 18 08 00 45 00
@@ -262,7 +266,34 @@
 <pre tabindex="0"><code>08 00 4d 5a 00 01 00 01 61 62 63 64 65 66 67 68
 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 61
 62 63 64 65 66 67 68 69
-</code></pre><p>This is the layout of an ICMP packet:</p>
+</code></pre><p>The table below describes the whole packet layout:</p>
+<table>
+  <thead>
+      <tr>
+          <th>Offsets (inclusive)</th>
+          <th>Value</th>
+          <th>Belongs to</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td><code>0x00</code> - <code>0x0d</code></td>
+          <td>Ethernet Header</td>
+          <td>Ethernet Frame</td>
+      </tr>
+      <tr>
+          <td><code>0x0e</code> - <code>0x21</code></td>
+          <td>IPv4 Header</td>
+          <td>Ethernet Payload</td>
+      </tr>
+      <tr>
+          <td><code>0x22</code> - <code>0x49</code></td>
+          <td>ICMP Packet</td>
+          <td>IPv4 Payload</td>
+      </tr>
+  </tbody>
+</table>
+<p>This is the layout of an ICMP packet:</p>
 <!-- ![](ICMP-packet-structure.png) -->
 <pre tabindex="0"><code> |    8 bits    |    8 bits     |            16 bits            |
 

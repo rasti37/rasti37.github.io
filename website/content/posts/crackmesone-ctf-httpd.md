@@ -186,7 +186,15 @@ From a quick research using any search engine, we find the following:
 
 It looks like a valid Ethernet frame requires a minimum payload of 46 bytes. Consider the Ethernet frame as the outer peel of any network packet (TCP/UDP/HTTP/IP/ICMP and so on) out there. It encapsulates the entire packet, just like the outer onion peel encapsulates the inner ones.
 
-Packet = Ethernet Frame = Ethernet Header + Ethernet Payload = Ethernet Header + (IPv4 Packet) = Ethernet Header + (IPv4 Header + IPv4 Payload) = Ethernet Header + (IPv4 Header + ICMP packet).
+Packet = Ethernet Frame
+
+Packet = Ethernet Header + Ethernet Payload
+
+Packet = Ethernet Header + IPv4 Packet
+
+Packet = Ethernet Header + IPv4 Header + IPv4 Payload
+
+Packet = Ethernet Header + IPv4 Header + ICMP packet
 
 # ICMP Packet Format
 
@@ -214,6 +222,14 @@ The IPv4 payload, which is also the ICMP packet, starts at the offset `0x22` and
 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 61
 62 63 64 65 66 67 68 69
 ```
+
+The table below describes the whole packet layout:
+
+| Offsets (inclusive) | Value | Belongs to |
+| ------ | ----- | ----- |
+| `0x00` - `0x0d` | Ethernet Header | Ethernet Frame |
+| `0x0e` - `0x21` | IPv4 Header | Ethernet Payload |
+| `0x22` - `0x49` | ICMP Packet | IPv4 Payload |
 
 This is the layout of an ICMP packet:
 
