@@ -254,17 +254,17 @@
 <p>Packet = Ethernet Header + IPv4 Header + ICMP packet</p>
 <h1 id="icmp-packet-format">ICMP Packet Format</h1>
 <p>Let&rsquo;s analyze a dummy ICMP packet captured in Wireshark. I pinged <code>8.8.8.8</code> and got the following Ethernet frame in hex:</p>
-<pre tabindex="0"><code>0000 a0 95 7f 4e 25 50 08 60 6e d5 8b 18 08 00 45 00
-0010 00 3c 54 5a 00 00 80 01 00 00 c0 a8 01 02 08 08
-0020 08 08 08 00 4d 5a 00 01 00 01 61 62 63 64 65 66
-0030 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76
-0040 77 61 62 63 64 65 66 67 68 69
+<pre tabindex="0"><code>0000 a0 95 7f 4e 25 50 08 60   6e d5 8b 18 08 00 45 00
+0010 00 3c 54 5a 00 00 80 01   00 00 c0 a8 01 02 08 08
+0020 08 08 08 00 4d 5a 00 01   00 01 61 62 63 64 65 66
+0030 67 68 69 6a 6b 6c 6d 6e   6f 70 71 72 73 74 75 76
+0040 77 61 62 63 64 65 66 67   68 69
 </code></pre><p>The IPv4 header starts at the offset <code>0x0e</code> and is 20 bytes long.</p>
-<pre tabindex="0"><code>45 00 00 3c 54 5a 00 00 80 01 00 00 c0 a8 01 02
+<pre tabindex="0"><code>45 00 00 3c 54 5a 00 00   80 01 00 00 c0 a8 01 02
 08 08 08 08
 </code></pre><p>The IPv4 payload, which is also the ICMP packet, starts at the offset <code>0x22</code> and is 40 bytes long.</p>
-<pre tabindex="0"><code>08 00 4d 5a 00 01 00 01 61 62 63 64 65 66 67 68
-69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 61
+<pre tabindex="0"><code>08 00 4d 5a 00 01 00 01   61 62 63 64 65 66 67 68
+69 6a 6b 6c 6d 6e 6f 70   71 72 73 74 75 76 77 61
 62 63 64 65 66 67 68 69
 </code></pre><p>The table below describes the whole packet layout:</p>
 <table>
@@ -307,7 +307,7 @@
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 </code></pre><p><small>Inspired by: <a href="https://datatracker.ietf.org/doc/html/rfc792" target="_blank" rel="noopener">https://datatracker.ietf.org/doc/html/rfc792</a> (Page 14)</small></p>
 <p>It turns out that this image contains more than enough information required for solving this challenge.</p>
-<p>We are particularly interested in the ICMP packet format so let&rsquo;s dive into it:</p>
+<p>We are particularly interested in the ICMP packet format so let&rsquo;s jump into it.</p>
 <h2 id="the-type-field">The <code>Type</code> field</h2>
 <p><code>Type</code> is an 8-bit field and the leading byte of an ICMP packet. The <code>ping</code> command, with which we usually send ICMP packets, uses two message types; <code>Echo Request</code> and <code>Echo Reply</code> with identifiers <code>08</code> and <code>00</code> respectively. For more info, check Page 14 of the <a href="https://datatracker.ietf.org/doc/html/rfc792" target="_blank" rel="noopener">official RFC</a>.</p>
 <p>In the dummy packet above, the type is <code>08</code> which corresponds to <code>Echo Request</code>. If we inspected the corresponding reply message, the type would be <code>00</code>; for <code>Echo Reply</code>.</p>
@@ -393,13 +393,13 @@
 <img src="last-checks.png" style="zoom: 80%" />
 <p>After setting all the bytes of the AES key, there are some final checks and then the flag is decrypted and echoed as the reply message.</p>
 <ul>
-<li>The packet offset 0x26 (which is the ICMP packet identifier) must be equal to <code>0x1337</code></li>
-<li>The packet offset 0x10 when rotated left by 8 bits must be equal to <code>0x20</code>. The offset 0x10 belongs to the IPv4 header and specifies the total length of the IPv4 packet (IPv4 Header + ICMP packet). For our case, the total length should be <code>0x20</code> bytes.</li>
-<li>The packet offset 0x2a (which is the ICMP packet payload) must be equal to <code>0xe55fdec6</code></li>
-<li>The packet offset 0x22 (which is the ICMP packet type field) must be equal to <code>0x08</code></li>
+<li>The packet bytes at offset 0x26 (which is the ICMP packet identifier) must be equal to <code>0x1337</code></li>
+<li>The packet bytes at offset 0x10 when rotated left by 8 bits must be equal to <code>0x20</code>. The offset 0x10 belongs to the IPv4 header and specifies the total length of the IPv4 packet (IPv4 Header + ICMP packet). For our case, the total length should be <code>0x20</code> bytes.</li>
+<li>The packet bytes at offset 0x2a (which is the ICMP packet payload) must be equal to <code>0xe55fdec6</code></li>
+<li>The packet bytes at offset 0x22 (which is the ICMP packet type field) must be equal to <code>0x08</code></li>
 </ul>
 <p>Let&rsquo;s use these constraints to solve for the unknown variables $k_i$. Keep in mind that we need to be careful with the endianess, we can verify our results by debugging the binary in a FreeBSD virtual machine.</p>
-<p>We will define the key as a 16-byte array initialized to the byte <code>X</code>.</p>
+<p>We will define the key as a 16-byte array initialized to the placeholder byte <code>X</code>.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>K <span style="color:#f92672">=</span> [ord(<span style="color:#e6db74">&#34;X&#34;</span>) <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">16</span>)]
 </span></span></code></pre></div><p>We compute $k_{12}, k_{13}$:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> K[<span style="color:#ae81ff">12</span>:<span style="color:#ae81ff">14</span>] <span style="color:#f92672">=</span> <span style="color:#e6db74">b</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x37\x13</span><span style="color:#e6db74">&#34;</span>
@@ -428,7 +428,7 @@
 <li>Sequence number</li>
 <li>Payload</li>
 </ul>
-<p>The only fields for which we don&rsquo;t have constraints are <code>Code</code> and the <code>Sequence number</code>. However, documentation (<del>and LLMs</del>) say that usually <code>code = 0</code> and sequence number is either <code>0</code> or <code>1</code>, therefore, we get two different checksum values for each pair. Let&rsquo;s write a function that crafts an ICMP packet header:</p>
+<p>The only fields for which we don&rsquo;t have constraints are <code>Code</code> and the <code>Sequence number</code>. However, documentation (<del>and LLMs</del>) says that usually code is <code>0</code> and sequence number is either <code>0</code> or <code>1</code>, therefore, we get two different checksum values for each pair. Let&rsquo;s write a function that crafts an ICMP packet header:</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">build_icmp_header</span>(typ, code, identifier, sequence_number):
 </span></span><span style="display:flex;"><span>    <span style="color:#75715e"># replace checksum with 0x0000</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> struct<span style="color:#f92672">.</span>pack(<span style="color:#e6db74">&#34;!BBHHH&#34;</span>, typ, code, <span style="color:#ae81ff">0x00</span>, identifier, sequence_number)
@@ -593,7 +593,7 @@
 
 
 </p>
-<p>We can run the following from our host to verify that the server works fine:</p>
+<p>We can run the following from our host to verify that the server responds successfully:</p>
 <pre tabindex="0"><code>C:\Users\r4sti&gt;curl http://192.168.1.218:8080
 Nothing to see here :{
 </code></pre><p>Let&rsquo;s write a function to send repeated packets until we hit the right flags and sequence number:</p>
@@ -612,11 +612,12 @@ Nothing to see here :{
 
 </p>
 <h1 id="the-secret-ingredient">The secret ingredient</h1>
-<p>Even if I didn&rsquo;t mention it at all, I spent a lot of hours debugging to validate whether my findings were correct. It turned out that I had everything correct apart from these ****** flags and sequence number fields that made me waste so much time to <del>guess</del> figure out. Behind each detailed writeup, there always exists a reverse engineer in pain that most likely, tried hundred more things while solving at real-time which unfortunately cannot be showcased in a single writeup. That would make it too hard to follow. Some things that I did but didn&rsquo;t mention:</p>
+<p>Even if I didn&rsquo;t mention it at all, I spent a lot of hours debugging to validate whether my findings were correct. It turned out that I had everything correct apart from these ****** flags and sequence number fields that made me waste so much time to <del>guess</del> figure out. Behind every detailed writeup, there always exists a reverse engineer in pain that most likely, tried hundred more things while solving at real-time which unfortunately cannot be showcased in a single writeup. That would make it too hard to follow. Some things that I did but didn&rsquo;t mention:</p>
 <ul>
 <li>Write a C program that bruteforces the TTL, the protocol, the flags and the checksum😓.</li>
 <li>Debug the program to validate my findings. This is due to me working entirely in assembly level as IDA decompilation was broken. It was until I started writing the writeup with Binja that I realized how easy it was to fix the decompilation. I believe seeing the decompilation for this function could eliminate the need of extensive debugger usage.</li>
 <li>Breakpoint at <code>mov</code> instructions that constructed the AES key. This helped a lot, especially for $k_0,k_1,k_{14},k_{15}$.</li>
+<li>Debugging to resolve endianess issues.</li>
 <li>Extensive use of LLM out of desperation to help me understand why my solution didn&rsquo;t work. Iirc it suggested me setting all the possible flag bits since the first or two hours while solving, but I was pretty convinced that it was just hallucinating&hellip; Maybe I should blindly listen to it, but this suffering forced me to understand exactly how ICMP and IP packets are crafted.</li>
 </ul>
 

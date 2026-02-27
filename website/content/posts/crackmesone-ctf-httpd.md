@@ -201,25 +201,25 @@ Packet = Ethernet Header + IPv4 Header + ICMP packet
 Let's analyze a dummy ICMP packet captured in Wireshark. I pinged `8.8.8.8` and got the following Ethernet frame in hex:
 
 ```
-0000 a0 95 7f 4e 25 50 08 60 6e d5 8b 18 08 00 45 00
-0010 00 3c 54 5a 00 00 80 01 00 00 c0 a8 01 02 08 08
-0020 08 08 08 00 4d 5a 00 01 00 01 61 62 63 64 65 66
-0030 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76
-0040 77 61 62 63 64 65 66 67 68 69
+0000 a0 95 7f 4e 25 50 08 60   6e d5 8b 18 08 00 45 00
+0010 00 3c 54 5a 00 00 80 01   00 00 c0 a8 01 02 08 08
+0020 08 08 08 00 4d 5a 00 01   00 01 61 62 63 64 65 66
+0030 67 68 69 6a 6b 6c 6d 6e   6f 70 71 72 73 74 75 76
+0040 77 61 62 63 64 65 66 67   68 69
 ```
 
 The IPv4 header starts at the offset `0x0e` and is 20 bytes long.
 
 ```
-45 00 00 3c 54 5a 00 00 80 01 00 00 c0 a8 01 02
+45 00 00 3c 54 5a 00 00   80 01 00 00 c0 a8 01 02
 08 08 08 08
 ```
 
 The IPv4 payload, which is also the ICMP packet, starts at the offset `0x22` and is 40 bytes long.
 
 ```
-08 00 4d 5a 00 01 00 01 61 62 63 64 65 66 67 68
-69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 61
+08 00 4d 5a 00 01 00 01   61 62 63 64 65 66 67 68
+69 6a 6b 6c 6d 6e 6f 70   71 72 73 74 75 76 77 61
 62 63 64 65 66 67 68 69
 ```
 
@@ -252,7 +252,7 @@ This is the layout of an ICMP packet:
 
 It turns out that this image contains more than enough information required for solving this challenge.
 
-We are particularly interested in the ICMP packet format so let's dive into it:
+We are particularly interested in the ICMP packet format so let's jump into it.
 
 ## The `Type` field
 
@@ -389,14 +389,14 @@ Notice that $k_{14}, k_{15}$ are computed very similarly to $k_0, k_1$. These de
 
 After setting all the bytes of the AES key, there are some final checks and then the flag is decrypted and echoed as the reply message.
 
-- The packet offset 0x26 (which is the ICMP packet identifier) must be equal to `0x1337`
-- The packet offset 0x10 when rotated left by 8 bits must be equal to `0x20`. The offset 0x10 belongs to the IPv4 header and specifies the total length of the IPv4 packet (IPv4 Header + ICMP packet). For our case, the total length should be `0x20` bytes.
-- The packet offset 0x2a (which is the ICMP packet payload) must be equal to `0xe55fdec6`
-- The packet offset 0x22 (which is the ICMP packet type field) must be equal to `0x08`
+- The packet bytes at offset 0x26 (which is the ICMP packet identifier) must be equal to `0x1337`
+- The packet bytes at offset 0x10 when rotated left by 8 bits must be equal to `0x20`. The offset 0x10 belongs to the IPv4 header and specifies the total length of the IPv4 packet (IPv4 Header + ICMP packet). For our case, the total length should be `0x20` bytes.
+- The packet bytes at offset 0x2a (which is the ICMP packet payload) must be equal to `0xe55fdec6`
+- The packet bytes at offset 0x22 (which is the ICMP packet type field) must be equal to `0x08`
 
 Let's use these constraints to solve for the unknown variables $k_i$. Keep in mind that we need to be careful with the endianess, we can verify our results by debugging the binary in a FreeBSD virtual machine.
 
-We will define the key as a 16-byte array initialized to the byte `X`.
+We will define the key as a 16-byte array initialized to the placeholder byte `X`.
 
 ```python
 K = [ord("X") for _ in range(16)]
@@ -445,7 +445,7 @@ Even though the value of the checksum is unknown, we know it depends on the ICMP
 - Sequence number
 - Payload
 
-The only fields for which we don't have constraints are `Code` and the `Sequence number`. However, documentation (~~and LLMs~~) say that usually `code = 0` and sequence number is either `0` or `1`, therefore, we get two different checksum values for each pair. Let's write a function that crafts an ICMP packet header:
+The only fields for which we don't have constraints are `Code` and the `Sequence number`. However, documentation (~~and LLMs~~) says that usually code is `0` and sequence number is either `0` or `1`, therefore, we get two different checksum values for each pair. Let's write a function that crafts an ICMP packet header:
 
 ```python
 def build_icmp_header(typ, code, identifier, sequence_number):
@@ -634,7 +634,7 @@ Now we can run the binary and the "HTTP server" starts running :-)
 
 ![](server-is-running.png)
 
-We can run the following from our host to verify that the server works fine:
+We can run the following from our host to verify that the server responds successfully:
 
 ```
 C:\Users\r4sti>curl http://192.168.1.218:8080
@@ -658,9 +658,10 @@ Output:
 
 # The secret ingredient
 
-Even if I didn't mention it at all, I spent a lot of hours debugging to validate whether my findings were correct. It turned out that I had everything correct apart from these ****** flags and sequence number fields that made me waste so much time to ~~guess~~ figure out. Behind each detailed writeup, there always exists a reverse engineer in pain that most likely, tried hundred more things while solving at real-time which unfortunately cannot be showcased in a single writeup. That would make it too hard to follow. Some things that I did but didn't mention:
+Even if I didn't mention it at all, I spent a lot of hours debugging to validate whether my findings were correct. It turned out that I had everything correct apart from these ****** flags and sequence number fields that made me waste so much time to ~~guess~~ figure out. Behind every detailed writeup, there always exists a reverse engineer in pain that most likely, tried hundred more things while solving at real-time which unfortunately cannot be showcased in a single writeup. That would make it too hard to follow. Some things that I did but didn't mention:
 
 - Write a C program that bruteforces the TTL, the protocol, the flags and the checksum😓.
 - Debug the program to validate my findings. This is due to me working entirely in assembly level as IDA decompilation was broken. It was until I started writing the writeup with Binja that I realized how easy it was to fix the decompilation. I believe seeing the decompilation for this function could eliminate the need of extensive debugger usage.
 - Breakpoint at `mov` instructions that constructed the AES key. This helped a lot, especially for $k_0,k_1,k_{14},k_{15}$.
+- Debugging to resolve endianess issues.
 - Extensive use of LLM out of desperation to help me understand why my solution didn't work. Iirc it suggested me setting all the possible flag bits since the first or two hours while solving, but I was pretty convinced that it was just hallucinating... Maybe I should blindly listen to it, but this suffering forced me to understand exactly how ICMP and IP packets are crafted.
