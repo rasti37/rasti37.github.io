@@ -6,8 +6,15 @@
     <description>Recent content in Ctf-Writeups on rasti&#39;s knowledge cave</description>
     <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 06 Mar 2025 23:26:11 +0200</lastBuildDate>
+    <lastBuildDate>Fri, 27 Feb 2026 16:41:48 +0200</lastBuildDate>
     <atom:link href="http://localhost:1313/tags/ctf-writeups/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Crackmes.one CTF :: httpd</title>
+      <link>http://localhost:1313/posts/2026-02-27-crackmesone-ctf-httpd/</link>
+      <pubDate>Fri, 27 Feb 2026 16:41:48 +0200</pubDate>
+      <guid>http://localhost:1313/posts/2026-02-27-crackmesone-ctf-httpd/</guid>
+      <description>This is my writeup for a really cool challenge, named &amp;ldquo;httpd&amp;rdquo;, that I solved in Crackmes.one CTF. You will read about Golang reversing, how Ethernet, IP and ICMP packets are formatted and much more.</description>
+    </item>
     <item>
       <title>(Crypto) TSJ CTF 2022 - babyRSA</title>
       <link>http://localhost:1313/posts/2025-03-06-tsj-ctf-2022-babyrsa/</link>

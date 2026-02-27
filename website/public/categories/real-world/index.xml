@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Real-World on rasti&#39;s knowledge cave</title>
+    <link>http://localhost:1313/categories/real-world/</link>
+    <description>Recent content in Real-World on rasti&#39;s knowledge cave</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 16 Jul 2025 03:22:02 +0300</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/real-world/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>V8 Engine Version Detection</title>
+      <link>http://localhost:1313/posts/2025-07-16-v8-engine-version-detection/</link>
+      <pubDate>Wed, 16 Jul 2025 03:22:02 +0300</pubDate>
+      <guid>http://localhost:1313/posts/2025-07-16-v8-engine-version-detection/</guid>
+      <description>This is test summary</description>
+    </item>
+  </channel>
+</rss>

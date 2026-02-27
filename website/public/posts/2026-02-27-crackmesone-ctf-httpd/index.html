@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang='en-us'>
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta property="og:title" content="Crackmes.one CTF :: httpd">
+	<meta name="twitter:title" content="Crackmes.one CTF :: httpd">
+	<meta name="description" content="">
+	<meta property="og:description" content="">
+	<meta name="twitter:description" content="">
+	<meta property="og:type" content="article">
+	<meta property="og:url" content="http://localhost:1313/posts/2026-02-27-crackmesone-ctf-httpd/">
+	<meta property="og:site_name" content="rasti&#39;s knowledge cave">
+	<meta name="twitter:card" content="summary_large_image">
+	<link rel="icon" type="image/x-icon" href="/thumb.png">
+	<style type=text/css>body{font-family:monospace;}</style>
+	<title>Crackmes.one CTF :: httpd</title>
+	
+	
+	<link rel="stylesheet" href="/css/style.css">
+	
+	
+</head>
+<body>
+	<header>
+	****************************<br>
+	*&nbsp;&nbsp;<a href="http://localhost:1313/" class='header-footer-anchor'>rasti&#39;s knowledge cave</a>&nbsp;&nbsp;*<br>
+	****************************
+	<div style="float: right;">gatekeeping is for the weak</div><br>
+	<nav>
+		<a href="/" class='header-footer-anchor'><b>Start</b></a> ·
+		
+		
+		
+		<a href="/posts/" class='header-footer-anchor'><b>Posts</b></a> · 
+		
+		<a href="/categories/" class='header-footer-anchor'><b>Categories</b></a> · 
+		
+		<a href="/tags/" class='header-footer-anchor'><b>Tags</b></a>
+		
+	</nav>
+	<p></p>
+	
+</header>
+	
+<main>
+	<article>
+		<h1>Crackmes.one CTF :: httpd</h1>
+		<small>Created at: 27/02/2026, 16:41:48</small><br>
+		
+		
+		<br>.:
+		
+		
+		<a href="/tags/reverse-engineering" class='header-footer-anchor'>#reverse engineering</a>, 
+		
+		<a href="/tags/ctf-writeups" class='header-footer-anchor'>#ctf writeups</a>
+		:.
+		<div>
+			<p><code>#no_ai</code></p>
+<div style='cursor: pointer; border-radius: 3px; border:1px solid #888; padding: 7px; margin: 1.3em 0 1.3em 0;'>
+    <details>
+        <summary>Table of Contents</summary>
+        <nav id="TableOfContents">
+  <ul>
+    <li><a href="#synopsis">Synopsis</a></li>
+    <li><a href="#early-analysis">Early Analysis</a></li>
+    <li><a href="#static-analysis-with-binary-ninja">Static Analysis with Binary Ninja</a>
+      <ul>
+        <li><a href="#main-function-analysis">Main function analysis</a></li>
+        <li><a href="#analyzing-the-http-handler-function-rabbit-hole">Analyzing the HTTP handler function (Rabbit-hole)</a></li>
+        <li><a href="#analyzing-the-mysterious-goroutine">Analyzing the mysterious goroutine</a></li>
+      </ul>
+    </li>
+    <li><a href="#icmp-packet-format">ICMP Packet Format</a>
+      <ul>
+        <li><a href="#the-type-field">The <code>Type</code> field</a></li>
+        <li><a href="#the-code-field">The <code>Code</code> field</a></li>
+        <li><a href="#the-icmp-checksum-field">The <code>ICMP Checksum</code> field</a></li>
+        <li><a href="#the-identifier-and-sequence-number-fields">The <code>Identifier</code> and <code>Sequence Number</code> fields</a></li>
+        <li><a href="#the-payload-field">The <code>Payload</code> field</a></li>
+      </ul>
+    </li>
+    <li><a href="#analyzing-the-custom-icmp-packet-decoder">Analyzing the custom ICMP packet decoder</a>
+      <ul>
+        <li><a href="#demystifying-k_0-k_1">Demystifying $k_0, k_1$</a></li>
+        <li><a href="#demystifying-k_2-k_3-k_4-k_5">Demystifying $k_2, k_3, k_4, k_5$</a></li>
+        <li><a href="#demystifying-k_6-k_7">Demystifying $k_6, k_7$</a></li>
+        <li><a href="#demystifying-k_8-k_9-k_10-k_11">Demystifying $k_8, k_9, k_{10}, k_{11}$</a></li>
+        <li><a href="#demystifying-k_12-k_13">Demystifying $k_{12}, k_{13}$</a></li>
+        <li><a href="#demystifying-k_14-k_15">Demystifying $k_{14}, k_{15}$</a></li>
+        <li><a href="#constructing-the-aes-key">Constructing the AES key</a>
+          <ul>
+            <li><a href="#figuring-out-the-right-ipv4-flags">Figuring out the right IPv4 flags</a></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li><a href="#1-fully-static-solution">1. Fully Static Solution</a></li>
+    <li><a href="#2-solution-with-scapy">2. Solution with Scapy</a></li>
+    <li><a href="#the-secret-ingredient">The secret ingredient</a></li>
+  </ul>
+</nav>
+    </details>
+</div>
+<table><thead>
+  <tr>
+    <th>Challenge Author</th>
+    <th><code>crudd</code></th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td>Challenge Difficulty</td>
+    <td>Intermediate</td>
+  </tr>
+  <tr>
+    <td>Writeup Author</td>
+    <td><code>r4sti</code></td>
+  </tr>
+  <tr>
+    <td>Date</td>
+    <td>26<sup>th</sup> February 2026</td>
+  </tr>
+</tbody>
+</table>
+<img src="chall-info.png" style="zoom: 70%; margin-top: 10%" />
+<h1 id="synopsis">Synopsis</h1>
+<p><code>httpd</code> was rated as an intermediate challenge in which the players had to reverse engineer a statically linked Golang binary that initially looked like a benign HTTP server. Digging deeper, players would figure out that the program sets up a packet sniffer and captured ICMP packets sent at the <code>re0</code> device. The goal is to craft a custom ICMP packet based on the checks found at the binary. After sending the correct packet, the flag would be printed on the screen. Apart from this method, in this writeup, I also showcase a fully static solution that didn&rsquo;t involve running the binary at all.</p>
+<h1 id="early-analysis">Early Analysis</h1>
+<p>The zip handout contains two files; <code>httpd</code> and <code>README.md</code>. Let&rsquo;s unzip it and start by reading the contents of the README file &hellip;</p>
+<pre tabindex="0"><code>This file was found on an infected host. Can you figure out what it does?
+</code></pre><p>&hellip; which is basically the challenge&rsquo;s description. The fact that the file was found at an <em>infected</em> host might be interesting later so let&rsquo;s just keep it in mind for now.</p>
+<p>But what kind of file is it? We can find out by running the Linux <code>file</code> command:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ file httpd
+</span></span><span style="display:flex;"><span>httpd: ELF 64-bit LSB executable, x86-64, version <span style="color:#ae81ff">1</span> <span style="color:#f92672">(</span>FreeBSD<span style="color:#f92672">)</span>, dynamically linked, interpreter /libexec/ld-elf.so.1, <span style="color:#66d9ef">for</span> FreeBSD 14.3, FreeBSD-style, Go BuildID<span style="color:#f92672">=</span>qFhGj9dLilyvUQG0jioV/pdT2CXTFFROnGyFt_iWG/4oSXKlJuQ2v7ZdSaKAaG/1odovLc3PIPvXv8LHbgL, with debug_info, not stripped
+</span></span></code></pre></div><p>We get quite a few important information:</p>
+<ol>
+<li>We are dealing with a 64-bit executable compiled for x86-64 architecture</li>
+<li>It&rsquo;s compiled to run in FreeBSD 14.3 using the interpreter <code>/libexec/ld-elf.so.1</code></li>
+<li>It&rsquo;s written in Golang. You will see yourself that Golang decompilation looks <em>really</em> different than C/C++ and modern decompilers are still constantly improving in transpiling Golang code to C/C++ pseudocode.</li>
+<li>Symbols are <strong>not</strong> stripped (thankfully!). Dealing with stripped Golang binaries is a nightmare so the author was quite helpful here.</li>
+</ol>
+<p>Before jumping into the challenge, let&rsquo;s try running it first on an Ubuntu WSL2 (and see the error).</p>
+<pre tabindex="0"><code>$ ./httpd
+-bash: ./httpd: cannot execute: required file not found
+</code></pre><p>This is no surprise. We know the binary can only be run under FreeBSD 14.3.</p>
+<h1 id="static-analysis-with-binary-ninja">Static Analysis with Binary Ninja</h1>
+<h2 id="main-function-analysis">Main function analysis</h2>
+<p>It&rsquo;s a large binary so patience is key :-) (especially if your pc is an oldie, like mine)</p>
+<p>After analysis is finished, we get a gigantic list of ~3000 functions but almost all of them belong to libraries so we won&rsquo;t need to analyze them at all. Let&rsquo;s jump to the program&rsquo;s main logic. We can filter out just the <code>main</code>-related functions. The functions of interest are shown below.</p>
+<p>
+<figure>
+  <img src="main-func-filter.png" alt="" />
+</figure>
+
+
+</p>
+<p>In Golang, the main function is <code>main.main</code> so that would be a good start.</p>
+<img src="main_main.png" style="zoom: 70%"/>
+<p>At first glance, the main function prepares the environment to setup an HTTP server locally, at port 8080.</p>
+<p>Moreover, there are two <code>Fprintln</code> calls but it&rsquo;s not clear what the messages are. This is due to how Golang strings work under the hood. More specifically, strings are <strong>not</strong> null-terminated so decompilers don&rsquo;t know where to define the string. A Golang string is a struct object that contains both the string length and the string contents.</p>
+<p>The string defined at <code>0x747f00</code> is an example of a Golang string of length 5. However, its initialization looks like a big string but this is a decompilation issue. In reality, <code>os_Stdout_1</code> is just the first 5 bytes of this string; that is <code>:8080</code>.</p>
+<p>
+<figure>
+  <img src="main_stmp_0.png" alt="" />
+</figure>
+
+
+</p>
+<p><code>main__stmp_0</code> is 16-bytes long. The first 8 bytes store a pointer to the address <code>0x29a956</code> and the last 8 are the string length (in bytes). We right-click to the bytes <code>56</code> and <code>af</code> respectively and press <code>O</code> to define a pointer at this place.</p>
+<p>
+<figure>
+  <img src="deobfuscated-strings.png" alt="" />
+</figure>
+
+
+</p>
+<p>Now <code>main__stmp_0</code> and <code>main__stmp_2</code> point to a large string buffer but we know that their lengths are <code>0x12</code> and <code>0x2a</code> respectively. This yields:</p>
+<ul>
+<li><code>main__stmp_0</code> : <code>Starting server...</code></li>
+<li><code>main__stmp_2</code> : <code>Server is running at http://localhost:8080</code></li>
+</ul>
+<p>Back to main, the only two things that stand out are the addresses <code>0x747e49</code> to <code>0x747e95</code>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#66d9ef">void</span><span style="color:#f92672">**</span> <span style="color:#66d9ef">const</span> var_70_1 <span style="color:#f92672">=</span> <span style="color:#f92672">&amp;</span>data_2b33e8;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">uint64_t</span><span style="color:#f92672">*</span> <span style="color:#66d9ef">const</span> var_70_2 <span style="color:#f92672">=</span> <span style="color:#f92672">&amp;</span>net..stmp_87;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span><span style="color:#f92672">*</span> <span style="color:#66d9ef">const</span> var_60 <span style="color:#f92672">=</span> <span style="color:#f92672">&amp;</span>go.itab.net<span style="color:#f92672">/</span>http.HandlerFunc,net<span style="color:#f92672">/</span>http.Handler;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span><span style="color:#f92672">**</span> <span style="color:#66d9ef">const</span> var_58 <span style="color:#f92672">=</span> <span style="color:#f92672">&amp;</span>data_2b33e0;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int64_t</span> w <span style="color:#f92672">=</span> net<span style="color:#f92672">/</span>http.(<span style="color:#f92672">*</span>ServeMux).<span style="color:#a6e22e">Handle</span>(runtime.<span style="color:#a6e22e">newproc</span>(siz, fn), net<span style="color:#f92672">/</span>http.DefaultServeMux, <span style="color:#ae81ff">1</span>);
+</span></span></code></pre></div><p><code>runtime.newproc(function)</code> creates a new goroutine; this is equivalent to <code>go function()</code> in Golang syntax.</p>
+<p>Let&rsquo;s get into the rabbit-hole for a while.</p>
+<h2 id="analyzing-the-http-handler-function-rabbit-hole">Analyzing the HTTP handler function (Rabbit-hole)</h2>
+<p>From the <a href="https://pkg.go.dev/net/http#ServeMux.Handle" target="_blank" rel="noopener">docs</a> and by inspecting the assembly, we deduce that <code>Handle()</code> registers a handler function for requests to the HTTP server at the root endpoint <code>/</code>. <code>data_2b33e0</code> is a pointer to the function <code>main.handler</code> which is shown below:</p>
+<img src="http-handler.png" style="zoom: 70%"/>
+<p>We quickly notice that this function is a rabbit-hole. Even though the HTTP server accepts only GET requests, it responds with <code>Nothing to see here :{</code> when a GET request is done.</p>
+<h2 id="analyzing-the-mysterious-goroutine">Analyzing the mysterious goroutine</h2>
+<p><code>data_2B33E8</code> is a pointer to <code>net/http.init()</code> which contains the actual function body.</p>
+<p>DISCLAIMER: I always repeat that to myself but somehow I always forget it: <em><strong>Don&rsquo;t trust the decompilation, double-check with the corresponding assembly</strong></em>.</p>
+<p>Function assembly graph:</p>
+<img src="goroutine-graph.png" style="zoom: 70%"/>
+<p>Function decompilation:</p>
+<img src="goroutine-decomp.png" style="zoom: 70%"/>
+<p>Do you notice something odd? The decompilation and graph layouts are totally off. It&rsquo;s obvious that the decompilation doesn&rsquo;t show all the function&rsquo;s code and this must be an anti-decompilation technique (or just &hellip; Golang moment).</p>
+<p>From what we are able to see, this function does the following:</p>
+<ol>
+<li>
+<p><code>OpenLive</code> opens the device <code>re0</code> to read packets in promiscuous mode of size at most 1600 bytes long. However, the timeout is set to a weird value <code>0FFFFFFFFFF676980</code> which apparently is the cause of this decompilation corruption.</p>
+</li>
+<li>
+<p>Having setup the handle to the device, it calls <code>SetBPFFilter</code> to capture <code>icmp</code> packets. Based on the docs:</p>
+<blockquote>
+<p>SetBPFFilter compiles and sets a BPF filter for the pcap handle.</p>
+</blockquote>
+<p>The filter format is identical to that of tcpdump.</p>
+</li>
+</ol>
+<p>Unfortunately, after this call, decompilation breaks. We could go ahead patching some instructions out to clear the decompilation <del>but I think it makes the challenge significantly more difficult and that&rsquo;s not intended</del> &hellip; and this is exactly what we are going to do. It turns out that the initialization <code>int16_t* var_b0_1 = -0xffffffffff676980;</code> at address <code>0x7480d0</code> is what breaks the decompilation so let&rsquo;s right-click on the constant and select <code>Patch &gt; Convert to NOP</code>.</p>
+<p>It looks like I underestimated the power of Binary Ninja because this magic patch decompiled the rest of the function without an issue. Of course the code isn&rsquo;t 100% accurate but this is way more convenient to work with rather than plain assembly (as I did while solving the challenge🙂).</p>
+<img src="decomp-until-packets.png" style="zoom: 70%" />
+<p>This code basically sets up an ICMP packet sniffer and prepares the program to receive packets and do <em>something</em> with them.</p>
+<ol>
+<li>A new packet source object is created to read data from <code>re0</code>. Check the <a href="https://pkg.go.dev/github.com/google/gopacket/pcap#hdr-Reading_Live_Packets" target="_blank" rel="noopener">docs</a> for a very similar use case.</li>
+<li>Before calling <code>packetSource.Packets()</code>, there is a reference to a packet <code>Decoder</code> which looks interesting. Looking at the <a href="https://pkg.go.dev/github.com/Google/gopacket#hdr-Implementing_Your_Own_Decoder" target="_blank" rel="noopener">docs</a>, we start to suspect that a custom packet decoder is implemented and we need to find out how to send the correct packets.</li>
+</ol>
+<p>After calling <code>Packets()</code> there is an infinite loop that starts the listener and calls <code>chanrecv</code> to capture packets. We can see the following checks:</p>
+<img src="decomp-until-checks.png" style="zoom: 70%" />
+<p><code>e_2</code> is a variable that holds a value that is compared to a few integers. Let&rsquo;s denote <code>e_2</code> as $e_2$ because we love maths. From these checks, we deduce that:</p>
+<ul>
+<li>
+<p>If $e_2 &lt; 40$, an exception is thrown which most likely means that the received packet is invalid.</p>
+</li>
+<li>
+<p>If $40 &lt; e_2 &lt; 46$, code breaks out of the loop and the listener is terminated.</p>
+</li>
+<li>
+<p>If $e_2 &gt;= 46$, code proceeds to further packet decoding.</p>
+</li>
+</ul>
+<p>But what is the value of <code>e_2</code>? Why is $46$ the minimum valid length?</p>
+<p>From a quick research using any search engine, we find the following:</p>
+<p>
+<figure>
+  <img src="google-search-46.png" alt="" />
+</figure>
+
+
+</p>
+<p>It looks like a valid Ethernet frame requires a minimum payload of 46 bytes. Consider the Ethernet frame as the outer peel of any network packet (TCP/UDP/HTTP/IP/ICMP and so on) out there. It encapsulates the entire packet, just like the outer onion peel encapsulates the inner ones.</p>
+<p>Packet = Ethernet Frame = Ethernet Header + Ethernet Payload = Ethernet Header + (IPv4 Packet) = Ethernet Header + (IPv4 Header + IPv4 Payload) = Ethernet Header + (IPv4 Header + ICMP packet).</p>
+<h1 id="icmp-packet-format">ICMP Packet Format</h1>
+<p>Let&rsquo;s analyze a dummy ICMP packet captured in Wireshark. I pinged <code>8.8.8.8</code> and got the following Ethernet frame in hex:</p>
+<pre tabindex="0"><code>0000 a0 95 7f 4e 25 50 08 60 6e d5 8b 18 08 00 45 00
+0010 00 3c 54 5a 00 00 80 01 00 00 c0 a8 01 02 08 08
+0020 08 08 08 00 4d 5a 00 01 00 01 61 62 63 64 65 66
+0030 67 68 69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76
+0040 77 61 62 63 64 65 66 67 68 69
+</code></pre><p>The IPv4 header starts at the offset <code>0x0e</code> and is 20 bytes long.</p>
+<pre tabindex="0"><code>45 00 00 3c 54 5a 00 00 80 01 00 00 c0 a8 01 02
+08 08 08 08
+</code></pre><p>The IPv4 payload, which is also the ICMP packet, starts at the offset <code>0x22</code> and is 40 bytes long.</p>
+<pre tabindex="0"><code>08 00 4d 5a 00 01 00 01 61 62 63 64 65 66 67 68
+69 6a 6b 6c 6d 6e 6f 70 71 72 73 74 75 76 77 61
+62 63 64 65 66 67 68 69
+</code></pre><p>This is the layout of an ICMP packet:</p>
+<!-- ![](ICMP-packet-structure.png) -->
+<pre tabindex="0"><code> |    8 bits    |    8 bits     |            16 bits            |
+
+ 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7 0 1 2 3 4 5 6 7
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|     Type      |     Code      |          Checksum             |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|           Identifier          |        Sequence Number        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                            Payload                            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</code></pre><p><small>Inspired by: <a href="https://datatracker.ietf.org/doc/html/rfc792" target="_blank" rel="noopener">https://datatracker.ietf.org/doc/html/rfc792</a> (Page 14)</small></p>
+<p>It turns out that this image contains more than enough information required for solving this challenge.</p>
+<p>We are particularly interested in the ICMP packet format so let&rsquo;s dive into it:</p>
+<h2 id="the-type-field">The <code>Type</code> field</h2>
+<p><code>Type</code> is an 8-bit field and the leading byte of an ICMP packet. The <code>ping</code> command, with which we usually send ICMP packets, uses two message types; <code>Echo Request</code> and <code>Echo Reply</code> with identifiers <code>08</code> and <code>00</code> respectively. For more info, check Page 14 of the <a href="https://datatracker.ietf.org/doc/html/rfc792" target="_blank" rel="noopener">official RFC</a>.</p>
+<p>In the dummy packet above, the type is <code>08</code> which corresponds to <code>Echo Request</code>. If we inspected the corresponding reply message, the type would be <code>00</code>; for <code>Echo Reply</code>.</p>
+<p>In this challenge, we are interested in types <code>00</code> and <code>08</code>.</p>
+<h2 id="the-code-field">The <code>Code</code> field</h2>
+<p>Directly related to the type field. Check <a href="https://www.iana.org/assignments/icmp-parameters/icmp-parameters.xhtml#icmp-parameters-codes" target="_blank" rel="noopener">here</a> the complete list of all the possible <code>Code</code> values. We are again interested in the values <code>00</code> and <code>08</code>.</p>
+<h2 id="the-icmp-checksum-field">The <code>ICMP Checksum</code> field</h2>
+<p>The <code>Type</code>, <code>Code</code>, <code>Identifier</code>, <code>Sequence Number</code> and <code>Payload</code> fields are merged and hashed to a 16-bit checksum. You can find an implementation of the checksum algorithm <a href="https://www.cs.dartmouth.edu/~sergey/cs60/lab3/icmp4-rawsend.c" target="_blank" rel="noopener">here</a>. This can be transpiled to Python as follows:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">icmp_checksum</span>(data: bytes) <span style="color:#f92672">-&gt;</span> int:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> len(data) <span style="color:#f92672">%</span> <span style="color:#ae81ff">2</span>:
+</span></span><span style="display:flex;"><span>        data <span style="color:#f92672">+=</span> <span style="color:#e6db74">b</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x00</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    s <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, len(data), <span style="color:#ae81ff">2</span>):
+</span></span><span style="display:flex;"><span>        word <span style="color:#f92672">=</span> (data[i] <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">8</span>) <span style="color:#f92672">+</span> data[i<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>]
+</span></span><span style="display:flex;"><span>        s <span style="color:#f92672">+=</span> word
+</span></span><span style="display:flex;"><span>        s <span style="color:#f92672">=</span> (s <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xffff</span>) <span style="color:#f92672">+</span> (s <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">16</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> (<span style="color:#f92672">~</span>s) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xffff</span>
+</span></span></code></pre></div><h2 id="the-identifier-and-sequence-number-fields">The <code>Identifier</code> and <code>Sequence Number</code> fields</h2>
+<p>Based on the official docs of the ICMP protocol, for <code>code = 0</code>, which is the value of interest, these fields are initialized either to <code>0</code> or <code>1</code>.</p>
+<h2 id="the-payload-field">The <code>Payload</code> field</h2>
+<p>As the name implies, this field contains the actual echo message body that is sent to the receiver.</p>
+<p>For example, in the dummy packet above:</p>
+<ul>
+<li>Type : <code>0x08</code></li>
+<li>Code : <code>0x00</code></li>
+<li>Checksum : <code>0x4d5a</code></li>
+<li>Identifier : <code>0x01</code></li>
+<li>Sequence number : <code>0x01</code></li>
+<li>Payload : <code>abcdefghijklmnopqrstuvwabcdefghi</code></li>
+</ul>
+<h1 id="analyzing-the-custom-icmp-packet-decoder">Analyzing the custom ICMP packet decoder</h1>
+<p>Let&rsquo;s dive into the code after the length checks.</p>
+<img src="first-two-bytes.png" style="zoom: 70%" />
+<p>Looking at the highlighted lines above, there is a promising <code>key</code> array variable being assigned some values based on the captured packet bytes. This is eventually used to decrypt the flag with AES-256 CBC.</p>
+<img src="usage-of-key.png" style="zoom: 70%" />
+<p>Therefore, with some further code auditing and cross verifications, we should be able to understand that the goal is to figure out the AES key and IV to decrypt the flag. The encrypted flag is written at instruction <code>0x7484dc</code>:</p>
+<pre tabindex="0"><code>51F1A529B4DF7EC02A3B2F8F243D4EB35AEDB0CF0B9CDD8CCDE60E9B3EC4640C
+</code></pre><p>I know you might hate maths but notation can be really helpful. Let&rsquo;s denote the 16-byte key as $K$, such that $K = k_0k_1 \cdots k_{15}$, where $k_i$ is the $i$-th key byte.</p>
+<h2 id="demystifying-k_0-k_1">Demystifying $k_0, k_1$</h2>
+<p>Back to our analysis, why did I rename the two variables to <code>ICMPPacketPayload</code> and <code>ICMPPacketChecksum</code>?</p>
+<p>Looking at lines <code>0x74828a</code> and <code>0x748291</code>, the packet offsets <code>0x2a</code> and <code>0x24</code> are accessed respectively. Looking at our full dummy packet above, we deduce that:</p>
+<ul>
+<li><code>0x2a</code> corresponds to the start of the ICMP packet payload and</li>
+<li><code>0x24</code> corresponds to the ICMP packet checksum</li>
+</ul>
+<p>At line <code>0x74831c</code>, the decompilation is misleading. Looking at the corresponding assembly, we see:</p>
+<pre tabindex="0"><code class="language-x86asm" data-lang="x86asm">007482cc  89ca               mov     edx, ecx
+007482ce  c1e910             shr     ecx, 0x10
+007482d1  0fb75c2442         movzx   ebx, word [rsp+0x42 {ICMPPacketChecksum}]
+007482d6  31d9               xor     ecx, ebx
+007482d8  90                 nop     
+007482d9  66c1c108           rol     cx, 0x8
+007482dd  668908             mov     word [rax], cx
+</code></pre><p>We notice (and by debugging too) that the result after <code>ROLW</code> is written directly to [rax] and no <code>NOT</code> operation is involved. To be fair, it&rsquo;s not totally irrelevant - remember that the original ICMP checksum calculation algorithm involves a NOT operation in the end so this must be the confusion? I am not sure&hellip;</p>
+<p>Anyways, we now know that $k_0k_1 = \text{cx}$, where $k_0k_1 \cdots k_{15}$ the 16 key bytes. The value of <code>cx</code> depends on the checksum and the payload so more on that, later.</p>
+<h2 id="demystifying-k_2-k_3-k_4-k_5">Demystifying $k_2, k_3, k_4, k_5$</h2>
+<p>At line <code>0x74832e</code>, four bytes from the packet are accessed, starting from the offset <code>0x14</code>. By looking at the documentation of the IPv4 header, we learn that:</p>
+<ul>
+<li>Offsets <code>0x14</code>, <code>0x15</code> : IPv4 flags</li>
+<li>Offset <code>0x16</code> : IPv4 TTL (Time to Live) value</li>
+<li>Offset <code>0x17</code> : Current packet protocol</li>
+</ul>
+<p>This is where I believe that additional constraints should be provided so that we didn&rsquo;t have to &ldquo;guess&rdquo; the TTL value and the flags. From the <a href="https://en.wikipedia.org/wiki/Time_to_live#IP_packets" target="_blank" rel="noopener">Time To Live</a> Wikipedia article and the official <a href="https://en.wikipedia.org/wiki/List_of_IP_protocol_numbers" target="_blank" rel="noopener">List of IP protocol numbers</a>, we deduce that:</p>
+<ul>
+<li>For Linux machines, default TTL value is 64 (<code>0x40</code>)</li>
+<li>The protocol number for ICMP packets is <code>1</code>.</li>
+</ul>
+<p>Therefore, it&rsquo;s safe to assume that $k_4 = \text{0x40}$ and $k_5 = \text{0x01}$.</p>
+<p>More on $k_2, k_3$ and the flags later&hellip;😭</p>
+<h2 id="demystifying-k_6-k_7">Demystifying $k_6, k_7$</h2>
+<img src="k6k7.png" style="zoom: 80%" />
+<p>As mentioned above, packet offset <code>0x24</code> corresponds to the ICMP packet checksum, therefore $k_6k_7 = \text{checksum}$.</p>
+<h2 id="demystifying-k_8-k_9-k_10-k_11">Demystifying $k_8, k_9, k_{10}, k_{11}$</h2>
+<img src="k8k9k10k11.png" style="zoom: 80%" />
+<p>As mentioned above, packet offset <code>0x2a</code> corresponds to the ICMP packet payload, therefore $k_8k_9k_{10}k_{11} = \text{payload}$.</p>
+<h2 id="demystifying-k_12-k_13">Demystifying $k_{12}, k_{13}$</h2>
+<img src="k12k13.png" style="zoom: 80%" />
+<p>Looking at the dummy packet above, offset <code>0x26</code> corresponds to the 16-bit <code>Identifier</code> field of the ICMP packet, therefore $k_{12}k_{13} = \text{identifier}$.</p>
+<h2 id="demystifying-k_14-k_15">Demystifying $k_{14}, k_{15}$</h2>
+<img src="k14k15.png" style="zoom: 80%" />
+<p>Notice that $k_{14}, k_{15}$ are computed very similarly to $k_0, k_1$. These depend to the ICMP checksum and the ICMP payload.</p>
+<h2 id="constructing-the-aes-key">Constructing the AES key</h2>
+<img src="last-checks.png" style="zoom: 80%" />
+<p>After setting all the bytes of the AES key, there are some final checks and then the flag is decrypted and echoed as the reply message.</p>
+<ul>
+<li>The packet offset 0x26 (which is the ICMP packet identifier) must be equal to <code>0x1337</code></li>
+<li>The packet offset 0x10 when rotated left by 8 bits must be equal to <code>0x20</code>. The offset 0x10 belongs to the IPv4 header and specifies the total length of the IPv4 packet (IPv4 Header + ICMP packet). For our case, the total length should be <code>0x20</code> bytes.</li>
+<li>The packet offset 0x2a (which is the ICMP packet payload) must be equal to <code>0xe55fdec6</code></li>
+<li>The packet offset 0x22 (which is the ICMP packet type field) must be equal to <code>0x08</code></li>
+</ul>
+<p>Let&rsquo;s use these constraints to solve for the unknown variables $k_i$. Keep in mind that we need to be careful with the endianess, we can verify our results by debugging the binary in a FreeBSD virtual machine.</p>
+<p>We will define the key as a 16-byte array initialized to the byte <code>X</code>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span>K <span style="color:#f92672">=</span> [ord(<span style="color:#e6db74">&#34;X&#34;</span>) <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">16</span>)]
+</span></span></code></pre></div><p>We compute $k_{12}, k_{13}$:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> K[<span style="color:#ae81ff">12</span>:<span style="color:#ae81ff">14</span>] <span style="color:#f92672">=</span> <span style="color:#e6db74">b</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x37\x13</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> bytes(K)
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;XXXXXXXXXXXX7</span><span style="color:#ae81ff">\x13</span><span style="color:#e6db74">XX&#39;</span>
+</span></span></code></pre></div><p>We compute $k_8, k_9, k_{10}, k_{11}$:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#f92672">import</span> struct
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> PAYLOAD <span style="color:#f92672">=</span> struct<span style="color:#f92672">.</span>pack(<span style="color:#e6db74">&#34;&lt;I&#34;</span>, <span style="color:#ae81ff">0xE55FDEC6</span>)    <span style="color:#75715e"># little endian</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> K[<span style="color:#ae81ff">8</span>:<span style="color:#ae81ff">12</span>] <span style="color:#f92672">=</span> PAYLOAD
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> bytes(K)
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;XXXXXXXX</span><span style="color:#ae81ff">\xc6\xde</span><span style="color:#e6db74">_</span><span style="color:#ae81ff">\xe5</span><span style="color:#e6db74">7</span><span style="color:#ae81ff">\x13</span><span style="color:#e6db74">XX&#39;</span>
+</span></span></code></pre></div><p>We compute $k_4, k_5$:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> K[<span style="color:#ae81ff">4</span>:<span style="color:#ae81ff">6</span>] <span style="color:#f92672">=</span> <span style="color:#e6db74">b</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x40\x01</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> bytes(K)
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;XXXX@</span><span style="color:#ae81ff">\x01</span><span style="color:#e6db74">XX</span><span style="color:#ae81ff">\xc6\xde</span><span style="color:#e6db74">_</span><span style="color:#ae81ff">\xe5</span><span style="color:#e6db74">7</span><span style="color:#ae81ff">\x13</span><span style="color:#e6db74">XX&#39;</span>
+</span></span></code></pre></div><p>For the sake of computing $k_0, k_1, k_{14}, k_{15}, k_6, k_7$, we will represent the checksum in <em><strong>big endian</strong></em>. Currently, the value of checksum is unknown so let&rsquo;s initialize it to something like <code>0xdead</code>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> chksum <span style="color:#f92672">=</span> <span style="color:#ae81ff">0xdead</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> K[<span style="color:#ae81ff">0</span>:<span style="color:#ae81ff">2</span>] <span style="color:#f92672">=</span> int<span style="color:#f92672">.</span>to_bytes(chksum <span style="color:#f92672">^</span> <span style="color:#ae81ff">0xe55f</span>, length<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, byteorder<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;big&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> K[<span style="color:#ae81ff">14</span>:] <span style="color:#f92672">=</span> int<span style="color:#f92672">.</span>to_bytes(chksum <span style="color:#f92672">^</span> <span style="color:#ae81ff">0xdec6</span>, length<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, byteorder<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;big&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> K[<span style="color:#ae81ff">6</span>:<span style="color:#ae81ff">8</span>] <span style="color:#f92672">=</span> struct<span style="color:#f92672">.</span>pack(<span style="color:#e6db74">&#34;&lt;H&#34;</span>, chksum)
+</span></span></code></pre></div><p>Even though the value of the checksum is unknown, we know it depends on the ICMP fields:</p>
+<ul>
+<li>Type</li>
+<li>Code</li>
+<li>Identifier</li>
+<li>Sequence number</li>
+<li>Payload</li>
+</ul>
+<p>The only fields for which we don&rsquo;t have constraints are <code>Code</code> and the <code>Sequence number</code>. However, documentation (<del>and LLMs</del>) say that usually <code>code = 0</code> and sequence number is either <code>0</code> or <code>1</code>, therefore, we get two different checksum values for each pair. Let&rsquo;s write a function that crafts an ICMP packet header:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">build_icmp_header</span>(typ, code, identifier, sequence_number):
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># replace checksum with 0x0000</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> struct<span style="color:#f92672">.</span>pack(<span style="color:#e6db74">&#34;!BBHHH&#34;</span>, typ, code, <span style="color:#ae81ff">0x00</span>, identifier, sequence_number)
+</span></span></code></pre></div><p>Now let&rsquo;s compute the two checksum candidates:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> hex(icmp_checksum(build_icmp_header(<span style="color:#ae81ff">0x08</span>, <span style="color:#ae81ff">0x00</span>, <span style="color:#ae81ff">0x3713</span>, <span style="color:#ae81ff">0x00</span>) <span style="color:#f92672">+</span> PAYLOAD))
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;0x9a28&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> hex(icmp_checksum(build_icmp_header(<span style="color:#ae81ff">0x08</span>, <span style="color:#ae81ff">0x00</span>, <span style="color:#ae81ff">0x3713</span>, <span style="color:#ae81ff">0x01</span>) <span style="color:#f92672">+</span> PAYLOAD))
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;0x9a27&#39;</span>
+</span></span></code></pre></div><p><em><strong>DISCLAIMER: I was NOT THAT sane and methodical while solving the challenge. My solution was chaotic and involved a lot of bruteforcing due to heavy desperation. For example, the entire time I thought the sequence number is just 0 based on the RFC, but it turns out the expected sequence number was 1.</strong></em></p>
+<p>Just like that, by substituting these two checksums, we get two candidate AES keys:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> chksum <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x9a28</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> <span style="color:#75715e"># represent in little endian (see assembly above)</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> K[<span style="color:#ae81ff">0</span>:<span style="color:#ae81ff">2</span>] <span style="color:#f92672">=</span> int<span style="color:#f92672">.</span>to_bytes(chksum <span style="color:#f92672">^</span> <span style="color:#ae81ff">0x5fe5</span>, length<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, byteorder<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;little&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> K[<span style="color:#ae81ff">14</span>:] <span style="color:#f92672">=</span> int<span style="color:#f92672">.</span>to_bytes(chksum <span style="color:#f92672">^</span> <span style="color:#ae81ff">0xc6de</span>, length<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, byteorder<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;little&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> K[<span style="color:#ae81ff">6</span>:<span style="color:#ae81ff">8</span>] <span style="color:#f92672">=</span> struct<span style="color:#f92672">.</span>pack(<span style="color:#e6db74">&#34;&gt;H&#34;</span>, chksum)    <span style="color:#75715e"># checksum is appended in big endian</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> bytes(K)
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\xcd\xc5</span><span style="color:#e6db74">XX@</span><span style="color:#ae81ff">\x01\x9a</span><span style="color:#e6db74">(</span><span style="color:#ae81ff">\xc6\xde</span><span style="color:#e6db74">_</span><span style="color:#ae81ff">\xe5</span><span style="color:#e6db74">7</span><span style="color:#ae81ff">\x13\xf6\\</span><span style="color:#e6db74">&#39;</span>
+</span></span></code></pre></div><p>and</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> chksum <span style="color:#f92672">=</span> <span style="color:#ae81ff">0x9a27</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> K[<span style="color:#ae81ff">0</span>:<span style="color:#ae81ff">2</span>] <span style="color:#f92672">=</span> int<span style="color:#f92672">.</span>to_bytes(chksum <span style="color:#f92672">^</span> <span style="color:#ae81ff">0x5fe5</span>, length<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, byteorder<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;little&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> K[<span style="color:#ae81ff">14</span>:] <span style="color:#f92672">=</span> int<span style="color:#f92672">.</span>to_bytes(chksum <span style="color:#f92672">^</span> <span style="color:#ae81ff">0xc6de</span>, length<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, byteorder<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;little&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> K[<span style="color:#ae81ff">6</span>:<span style="color:#ae81ff">8</span>] <span style="color:#f92672">=</span> struct<span style="color:#f92672">.</span>pack(<span style="color:#e6db74">&#34;&gt;H&#34;</span>, chksum)
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> bytes(K)
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">b</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\xc2\xc5</span><span style="color:#e6db74">XX@</span><span style="color:#ae81ff">\x01\x9a</span><span style="color:#e6db74">&#39;</span><span style="color:#ae81ff">\xc6\xde</span><span style="color:#e6db74">_</span><span style="color:#ae81ff">\xe5</span><span style="color:#e6db74">7</span><span style="color:#ae81ff">\x13\xf9\\</span><span style="color:#e6db74">&#34;</span>
+</span></span></code></pre></div><p>Now we are left with the IPv4 flags🙂.</p>
+<h3 id="figuring-out-the-right-ipv4-flags">Figuring out the right IPv4 flags</h3>
+<p>There are three IPv4 flags in total:</p>
+<ol>
+<li>Reserved bit (Always 0)</li>
+<li>Don&rsquo;t fragment flag (DF)</li>
+<li>More Fragments flag (MF)</li>
+</ol>
+<p>In case the MF flag is set, there is also the 8-bit field that is set; namely <code>Fragment Offset</code>. Since the reserved bit is always 0, we are left with the following flag choices:</p>
+<ul>
+<li>000</li>
+<li>010 (DF set)</li>
+<li>001 (MF set)</li>
+</ul>
+<p>I think the author here correctly assumed that <strong>IF</strong> the MF bit was set, this would require us having to guess the correct fragment offset and given that this would downgrade challenge&rsquo;s quality, we can <em>safely</em> rule this out (I can do it now, at the time of writeup, but wasn&rsquo;t that easy during the CTF&hellip;).</p>
+<p>We are left with two choices:</p>
+<ul>
+<li>000 (0x00)</li>
+<li>010 (0x02)</li>
+</ul>
+<p>Let&rsquo;s find the two possible 16-bit values for each candidate:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> int(<span style="color:#e6db74">&#34;000&#34;</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;0&#34;</span><span style="color:#f92672">*</span><span style="color:#ae81ff">13</span>, <span style="color:#ae81ff">2</span>)<span style="color:#f92672">.</span>to_bytes(length<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, byteorder<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;big&#34;</span>)<span style="color:#f92672">.</span>hex()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;0000&#39;</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">&gt;&gt;&gt;</span> int(<span style="color:#e6db74">&#34;010&#34;</span> <span style="color:#f92672">+</span> <span style="color:#e6db74">&#34;0&#34;</span><span style="color:#f92672">*</span><span style="color:#ae81ff">13</span>, <span style="color:#ae81ff">2</span>)<span style="color:#f92672">.</span>to_bytes(length<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, byteorder<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;big&#34;</span>)<span style="color:#f92672">.</span>hex()
+</span></span><span style="display:flex;"><span><span style="color:#e6db74">&#39;4000&#39;</span>
+</span></span></code></pre></div><p>In other words, either:</p>
+<ul>
+<li>$k_2 = \text{0x00}$ and $k_3 = \text{0x00}$</li>
+</ul>
+<p>or</p>
+<ul>
+<li>$k_2 = \text{0x40}$ and $k_3 = \text{0x00}$</li>
+</ul>
+<p>We have everything we need to try all the possible AES keys and see which one results in the flag.</p>
+<h1 id="1-fully-static-solution">1. Fully Static Solution</h1>
+<p>The final thing to figure out before we get the flag is the AES Initialization Vector (IV). Looking at the docs of <a href="https://pkg.go.dev/crypto/cipher#NewCBCDecrypter" target="_blank" rel="noopener">NewCBCDecrypter</a>, we see that the second argument of the function is the IV.</p>
+<p>Back to the decompilation, from line <code>0x7485a5</code>, it&rsquo;s clear that the IV is the same as the encryption key.</p>
+<p>
+<figure>
+  <img src="iv-equals-key.png" alt="" />
+</figure>
+
+
+</p>
+<p>Here is a plug-n-play solver that outputs the flag instantly.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">import</span> struct
+</span></span><span style="display:flex;"><span><span style="color:#f92672">from</span> Crypto.Cipher <span style="color:#f92672">import</span> AES
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>ENC_FLAG <span style="color:#f92672">=</span> bytes<span style="color:#f92672">.</span>fromhex(<span style="color:#e6db74">&#34;51F1A529B4DF7EC02A3B2F8F243D4EB35AEDB0CF0B9CDD8CCDE60E9B3EC4640C&#34;</span>)
+</span></span><span style="display:flex;"><span>PAYLOAD <span style="color:#f92672">=</span> struct<span style="color:#f92672">.</span>pack(<span style="color:#e6db74">&#34;&lt;I&#34;</span>, <span style="color:#ae81ff">0xE55FDEC6</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">icmp_checksum</span>(data: bytes) <span style="color:#f92672">-&gt;</span> int:
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> len(data) <span style="color:#f92672">%</span> <span style="color:#ae81ff">2</span>:
+</span></span><span style="display:flex;"><span>        data <span style="color:#f92672">+=</span> <span style="color:#e6db74">b</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x00</span><span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    s <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> i <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">0</span>, len(data), <span style="color:#ae81ff">2</span>):
+</span></span><span style="display:flex;"><span>        word <span style="color:#f92672">=</span> (data[i] <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">8</span>) <span style="color:#f92672">+</span> data[i<span style="color:#f92672">+</span><span style="color:#ae81ff">1</span>]
+</span></span><span style="display:flex;"><span>        s <span style="color:#f92672">+=</span> word
+</span></span><span style="display:flex;"><span>        s <span style="color:#f92672">=</span> (s <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xffff</span>) <span style="color:#f92672">+</span> (s <span style="color:#f92672">&gt;&gt;</span> <span style="color:#ae81ff">16</span>)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> (<span style="color:#f92672">~</span>s) <span style="color:#f92672">&amp;</span> <span style="color:#ae81ff">0xffff</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">construct_key</span>(flags, chksum):
+</span></span><span style="display:flex;"><span>    K <span style="color:#f92672">=</span> [<span style="color:#ae81ff">0</span> <span style="color:#66d9ef">for</span> _ <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">16</span>)]
+</span></span><span style="display:flex;"><span>    K[<span style="color:#ae81ff">0</span>:<span style="color:#ae81ff">2</span>] <span style="color:#f92672">=</span> int<span style="color:#f92672">.</span>to_bytes(chksum <span style="color:#f92672">^</span> <span style="color:#ae81ff">0x5fe5</span>, length<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, byteorder<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;little&#34;</span>)  <span style="color:#75715e"># first two bytes</span>
+</span></span><span style="display:flex;"><span>    K[<span style="color:#ae81ff">2</span>:<span style="color:#ae81ff">4</span>] <span style="color:#f92672">=</span> int<span style="color:#f92672">.</span>to_bytes(flags <span style="color:#f92672">&lt;&lt;</span> <span style="color:#ae81ff">13</span>, length<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, byteorder<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;big&#34;</span>)         <span style="color:#75715e"># add flag</span>
+</span></span><span style="display:flex;"><span>    K[<span style="color:#ae81ff">4</span>:<span style="color:#ae81ff">6</span>] <span style="color:#f92672">=</span> <span style="color:#e6db74">b</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x40\x01</span><span style="color:#e6db74">&#34;</span>                                                  <span style="color:#75715e"># add TTL and protocol</span>
+</span></span><span style="display:flex;"><span>    K[<span style="color:#ae81ff">6</span>:<span style="color:#ae81ff">8</span>] <span style="color:#f92672">=</span> struct<span style="color:#f92672">.</span>pack(<span style="color:#e6db74">&#34;&gt;H&#34;</span>, chksum)                                    <span style="color:#75715e"># add checksum</span>
+</span></span><span style="display:flex;"><span>    K[<span style="color:#ae81ff">8</span>:<span style="color:#ae81ff">12</span>] <span style="color:#f92672">=</span> PAYLOAD                                                     <span style="color:#75715e"># add payload</span>
+</span></span><span style="display:flex;"><span>    K[<span style="color:#ae81ff">12</span>:<span style="color:#ae81ff">14</span>] <span style="color:#f92672">=</span> <span style="color:#e6db74">b</span><span style="color:#e6db74">&#34;</span><span style="color:#ae81ff">\x37\x13</span><span style="color:#e6db74">&#34;</span>                                                <span style="color:#75715e"># add identifier</span>
+</span></span><span style="display:flex;"><span>    K[<span style="color:#ae81ff">14</span>:] <span style="color:#f92672">=</span> int<span style="color:#f92672">.</span>to_bytes(chksum <span style="color:#f92672">^</span> <span style="color:#ae81ff">0xc6de</span>, length<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>, byteorder<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;little&#34;</span>)  <span style="color:#75715e"># last two bytes</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> bytes(K)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">build_icmp_header</span>(typ, code, identifier, sequence_number):
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># checksum is replaced by 0x0000 for checksum calculation</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> struct<span style="color:#f92672">.</span>pack(<span style="color:#e6db74">&#34;!BBHHH&#34;</span>, typ, code, <span style="color:#ae81ff">0x0000</span>, identifier, sequence_number)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">fully_static_solution</span>():
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> flags <span style="color:#f92672">in</span> [<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">2</span>]:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> code <span style="color:#f92672">in</span> [<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">8</span>]:
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> sequence_number <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">10</span>):
+</span></span><span style="display:flex;"><span>                icmp_header <span style="color:#f92672">=</span> build_icmp_header(<span style="color:#ae81ff">0x08</span>, code, <span style="color:#ae81ff">0x3713</span>, sequence_number)
+</span></span><span style="display:flex;"><span>                chksum <span style="color:#f92672">=</span> icmp_checksum(icmp_header <span style="color:#f92672">+</span> PAYLOAD)
+</span></span><span style="display:flex;"><span>                KEY <span style="color:#f92672">=</span> construct_key(flags, chksum)
+</span></span><span style="display:flex;"><span>                IV <span style="color:#f92672">=</span> KEY
+</span></span><span style="display:flex;"><span>                cipher <span style="color:#f92672">=</span> AES<span style="color:#f92672">.</span>new(KEY, AES<span style="color:#f92672">.</span>MODE_CBC, IV)
+</span></span><span style="display:flex;"><span>                dec <span style="color:#f92672">=</span> cipher<span style="color:#f92672">.</span>decrypt(ENC_FLAG)
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">if</span> <span style="color:#e6db74">b</span><span style="color:#e6db74">&#34;CMO{&#34;</span> <span style="color:#f92672">in</span> dec:
+</span></span><span style="display:flex;"><span>                    print(flags, code, sequence_number, hex(chksum), dec)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>fully_static_solution()
+</span></span></code></pre></div><p>Output:</p>
+<pre tabindex="0"><code>2 0 1 0x9a27 b&#39;CMO{fUn_w1th_m4g1c_p4ck3t5}\x05\x05\x05\x05\x05&#39;
+</code></pre><p>Not gonna lie, I was really tilted when I realized that I was using the wrong flag for about 5 hours straight but it somehow made sense when I thought about this after solving the challenge&hellip;</p>
+<h1 id="2-solution-with-scapy">2. Solution with Scapy</h1>
+<p>Instead of doing all of this work manually, we can simply craft an ICMP packet from scratch and set each field accordingly so that the binary echoes the flag as the message.</p>
+<p>We can use the following Python script to craft an ICMP packet:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#f92672">from</span> scapy.all <span style="color:#f92672">import</span> IP, ICMP, Raw, send
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">send_packet</span>(flags, seq):
+</span></span><span style="display:flex;"><span>    SRC_IP    <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;192.168.1.2&#34;</span>
+</span></span><span style="display:flex;"><span>    TARGET_IP <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;192.168.1.218&#34;</span>    <span style="color:#75715e"># replace with your VM&#39;s ip</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">assert</span> len(PAYLOAD) <span style="color:#f92672">==</span> <span style="color:#ae81ff">0x04</span>
+</span></span><span style="display:flex;"><span>    pkt <span style="color:#f92672">=</span> IP(src<span style="color:#f92672">=</span>SRC_IP, dst<span style="color:#f92672">=</span>TARGET_IP, flags<span style="color:#f92672">=</span>flags) <span style="color:#f92672">/</span> ICMP(type<span style="color:#f92672">=</span><span style="color:#ae81ff">0x08</span>, id<span style="color:#f92672">=</span><span style="color:#ae81ff">0x3713</span>, seq<span style="color:#f92672">=</span>seq) <span style="color:#f92672">/</span> Raw(load<span style="color:#f92672">=</span>PAYLOAD)
+</span></span><span style="display:flex;"><span>    built <span style="color:#f92672">=</span> pkt<span style="color:#f92672">.</span>__class__(bytes(pkt))
+</span></span><span style="display:flex;"><span>    print(<span style="color:#e6db74">f</span><span style="color:#e6db74">&#34;[!] Sending to </span><span style="color:#e6db74">{</span>TARGET_IP<span style="color:#e6db74">}</span><span style="color:#e6db74">...&#34;</span>)
+</span></span><span style="display:flex;"><span>    send(built, verbose<span style="color:#f92672">=</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>    print(<span style="color:#e6db74">&#34;[+] Sent. Check binary&#39;s stdout.&#34;</span>)
+</span></span></code></pre></div><p>BUT, to run this script, we need to run the binary which means we need to run FreeBSD in a virtual machine. You can download <a href="https://download.freebsd.org/releases/ISO-IMAGES/14.3/FreeBSD-14.3-RELEASE-amd64-disc1.iso" target="_blank" rel="noopener">FreeBSD-14.3-RELEASE-amd64-disc1.iso</a> from the official FreeBSD repository.</p>
+<p><strong>WARNING: There is no GUI, it&rsquo;s all old-school hardcore CLI.🙂</strong></p>
+<p>Having logged in, it is most likely that you will get the following when trying to run the binary.</p>
+<p>
+<figure>
+  <img src="no-re0-device.png" alt="" />
+</figure>
+
+
+</p>
+<p>That&rsquo;s because the sniffer captures packets in the <code>re0</code> device. Our network is currently configured to support these two devices:</p>
+<p>
+<figure>
+  <img src="available-devices.png" alt="" />
+</figure>
+
+
+</p>
+<p>We can ghetto-bypass this by running <code>ifconfig em0 name re0</code>.</p>
+<p>
+<figure>
+  <img src="re0-registered.png" alt="" />
+</figure>
+
+
+</p>
+<p>Now we can run the binary and the &ldquo;HTTP server&rdquo; starts running :-)</p>
+<p>
+<figure>
+  <img src="server-is-running.png" alt="" />
+</figure>
+
+
+</p>
+<p>We can run the following from our host to verify that the server works fine:</p>
+<pre tabindex="0"><code>C:\Users\r4sti&gt;curl http://192.168.1.218:8080
+Nothing to see here :{
+</code></pre><p>Let&rsquo;s write a function to send repeated packets until we hit the right flags and sequence number:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">scapy_packet_crafting_solution</span>():
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> flags <span style="color:#f92672">in</span> [<span style="color:#ae81ff">0</span>, <span style="color:#ae81ff">2</span>]:
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> sequence_number <span style="color:#f92672">in</span> range(<span style="color:#ae81ff">5</span>):
+</span></span><span style="display:flex;"><span>            send_packet(flags, sequence_number)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>scapy_packet_crafting_solution()
+</span></span></code></pre></div><p>Output:</p>
+<p>
+<figure>
+  <img src="httpd-flag.png" alt="" />
+</figure>
+
+
+</p>
+<h1 id="the-secret-ingredient">The secret ingredient</h1>
+<p>Even if I didn&rsquo;t mention it at all, I spent a lot of hours debugging to validate whether my findings were correct. It turned out that I had everything correct apart from these ****** flags and sequence number fields that made me waste so much time to <del>guess</del> figure out. Behind each detailed writeup, there always exists a reverse engineer in pain that most likely, tried hundred more things while solving at real-time which unfortunately cannot be showcased in a single writeup. That would make it too hard to follow. Some things that I did but didn&rsquo;t mention:</p>
+<ul>
+<li>Write a C program that bruteforces the TTL, the protocol, the flags and the checksum😓.</li>
+<li>Debug the program to validate my findings. This is due to me working entirely in assembly level as IDA decompilation was broken. It was until I started writing the writeup with Binja that I realized how easy it was to fix the decompilation. I believe seeing the decompilation for this function could eliminate the need of extensive debugger usage.</li>
+<li>Breakpoint at <code>mov</code> instructions that constructed the AES key. This helped a lot, especially for $k_0,k_1,k_{14},k_{15}$.</li>
+<li>Extensive use of LLM out of desperation to help me understand why my solution didn&rsquo;t work. Iirc it suggested me setting all the possible flag bits since the first or two hours while solving, but I was pretty convinced that it was just hallucinating&hellip; Maybe I should blindly listen to it, but this suffering forced me to understand exactly how ICMP and IP packets are crafted.</li>
+</ul>
+
+		</div>
+	</article>
+</main>
+<aside>
+	<div>
+		<div>
+			<h3>RELATED POSTS</h3>
+		</div>
+		<div>
+			<ul>
+				
+				<li>2025-03-06 :: <a href="/posts/2025-03-06-tsj-ctf-2022-babyrsa/">(Crypto) TSJ CTF 2022 - babyRSA</a></li>
+				
+				<li>2025-03-02 :: <a href="/posts/2025-03-02-litctf-2023-lcg-squared/">(Crypto) LITCTF 2023 - LCG... Squared?</a></li>
+				
+				<li>2025-03-01 :: <a href="/posts/2025-03-01-backdoor-ctf-2024-hashing-frenzy-writeup/">(Crypto) Backdoor CTF 2024 - Hashing Frenzy</a></li>
+				
+			</ul>
+		</div>
+	</div>
+</aside>
+
+
+	<footer>
+	<p>&copy; 2026 :: <a href="http://localhost:1313/"
+			class='header-footer-anchor'><b>rasti&#39;s knowledge cave</b></a> ·
+		
+		<a href="https://github.com/rasti37" class='header-footer-anchor' target='_blank'><b>Github</b></a>
+	</p>
+</footer>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
+  integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"
+  integrity="sha384-Rma6DA2IPUwhNxmrB/7S3Tno0YY7sFu9WSYMCuulLhIqYSGZ2gKCJWIqhBWqMQfh" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js"
+  integrity="sha384-hCXGrW6PitJEwbkoStFjeJxv+fSOOQKOPbJxSfM6G5sWZjAyWhXiTIIAmQqnlLlh" crossorigin="anonymous"
+  onload="renderMathInElement(document.body);"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true }, 
+        { left: '$', right: '$', display: false }, 
+        { left: '\\(', right: '\\)', display: false }, 
+        { left: '\\[', right: '\\]', display: true }, 
+      ],
+      throwOnError: false
+    });
+  });
+</script>
+
+</body>
+</html>
